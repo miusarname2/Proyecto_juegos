@@ -9,7 +9,7 @@
 
 Este repositorio contiene una suite interactiva unificada que integra dos minijuegos de evaluación cognitiva y psicomotora controlados mediante la yema del dedo índice, utilizando modelos de visión por computadora basados en redes neuronales de **Google MediaPipe Hands**.
 
-Desarrollado como proyecto formativo para la asignatura **Aplicaciones de la Inteligencia Artificial** (6.º Semestre, Programa de Ingeniería de Sistemas) en la **Universidad Cooperativa de Colombia (UCC)**.
+La **versión original y conceptual de los juegos** fue desarrollada por **Royber José Zayas Herrera & Alexandra Parra Díaz** como proyecto para la asignatura **Aplicaciones de la Inteligencia Artificial** (6.º Semestre, Programa de Ingeniería de Sistemas) en la **Universidad Cooperativa de Colombia (UCC)**. Esta **nueva versión unificada y plataforma interactiva (SPA en React 19 + Vite)** es autoría 100% de **Oscar M. Alvarez G.** ([@miusarname2](https://github.com/miusarname2)), diseñada para posibilitar el despliegue productivo en la nube (Vercel/Netlify), navegación fluida mediante un menú centralizado y gestión robusta del ciclo de vida de la cámara web sin alterar las mecánicas originales.
 
 ---
 
@@ -143,17 +143,24 @@ Proyecto_juegos/
 
 ---
 
-## 🎓 Créditos Académicos
+## 🎓 Créditos y Autoría
 
 * **Institución:** Universidad Cooperativa de Colombia (UCC)
-* **Programa Académico:** Ingeniería de Sistemas
-* **Semestre:** 6.º Semestre
+* **Programa Académico:** Ingeniería de Sistemas · 6.º Semestre
 * **Asignatura:** Aplicaciones de la Inteligencia Artificial
 * **Docente Titular:** Jhon Freddy Linares
 
-### Estudiantes Desarrolladores:
+### 🚀 Nueva Versión Unificada (100% de Autoría):
+- **Oscar M. Alvarez G.** ([@miusarname2](https://github.com/miusarname2))
+  - Reingeniería completa y unificación en arquitectura SPA moderna con React 19 y Vite.
+  - Diseño del portal principal interactivo, sistema de navegación persistente con retorno seguro al menú y diagnóstico en vivo de cámara web.
+  - Gestión integral del ciclo de vida de streams WebRTC y MediaPipe Hands (prevención de fugas de memoria y control de cámara).
+  - Optimización de despliegue para Vercel, Netlify y entornos en la nube.
+
+### 🕹️ Autores de la Versión Original (Prototipos Base):
 - **Royber José Zayas Herrera** — ID: `911670`
 - **Alexandra Parra Díaz** — ID: `914953`
+  - Desarrollo de las mecánicas base de colisión, temporizadores, evaluaciones psicológicas originales y prototipos independientes en archivos HTML individuales (`Original/Carrito.html` y `Original/Globitos.html`).
 
 ---
 
@@ -161,4 +168,5 @@ Proyecto_juegos/
 
 Distribuido bajo la Licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
 
-*Copyright (c) 2026 Royber José Zayas Herrera & Alexandra Parra Díaz - Universidad Cooperativa de Colombia.*
+*Copyright (c) 2026 Oscar M. Alvarez G. (Nueva Versión Unificada).*  
+*Agradecimientos y créditos de la versión conceptual base a Royber José Zayas Herrera & Alexandra Parra Díaz - Universidad Cooperativa de Colombia.*
