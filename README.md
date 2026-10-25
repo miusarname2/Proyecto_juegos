@@ -46,7 +46,7 @@ Abre la carpeta del proyecto en tu editor de código (por ejemplo, Visual Studio
 
 Instala la extensión Live Server.
 
-Haz clic derecho sobre car_race_mediapipe.html o balloon_pop_mediapipe.html y selecciona "Open with Live Server".
+Haz clic derecho sobre Carrito.html o Globitos.html y selecciona "Open with Live Server".
 
 Concede los permisos de cámara en el navegador y comienza a jugar.
 
