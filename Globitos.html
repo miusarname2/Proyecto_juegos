@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Balloon Pop · Hand Tracking</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #0b1020;
+      color: #f4f7ff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    h1 { color: #7c5cff; }
+
+    .stage {
+      position: relative;
+      width: min(960px, 100%);
+      margin: 20px auto;
+      aspect-ratio: 16 / 9;
+      background: #10172b;
+      overflow: hidden;
+      border: 1px solid #34405e;
+      border-radius: 12px;
+    }
+
+    video, canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    video {
+      object-fit: cover;
+      transform: scaleX(-1);
+      opacity: 0.35;
+    }
+
+    canvas { z-index: 2; }
+
+    button {
+      padding: 12px 20px;
+      border: 0;
+      border-radius: 8px;
+      background: #7c5cff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #status { margin: 12px; color: #a8b4d3; }
+  </style>
+</head>
+<body>
+  <h1>BALLOON POP · HAND TRACKING</h1>
+  <p>Ingeniería de Sistemas · Aplicaciones de la Inteligencia Artificial</p>
+  <div id="status">Cámara apagada</div>
+
+  <div class="stage">
+    <video id="video" playsinline muted></video>
+    <canvas id="game" width="960" height="540"></canvas>
+  </div>
+
+  <button id="startBtn">Activar cámara</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+    crossorigin="anonymous"></script>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const video = document.getElementById("video");
+      const startBtn = document.getElementById("startBtn");
+      const statusEl = document.getElementById("status");
+
+      const W = canvas.width;
+      const H = canvas.height;
+
+      let hands = null;
+      let camera = null;
+      let activeLandmarks = [];
+      let animationId = null;
+      let cameraStarting = false;
+
+      function drawHands() {
+        ctx.clearRect(0, 0, W, H);
+
+        for (const landmarks of activeLandmarks) {
+          const points = landmarks.map(point => ({
+            x: (1 - point.x) * W,
+            y: point.y * H
+          }));
+
+          ctx.strokeStyle = "#b9aaff";
+          ctx.lineWidth = 3;
+
+          for (const [a, b] of HAND_CONNECTIONS) {
+            ctx.beginPath();
+            ctx.moveTo(points[a].x, points[a].y);
+            ctx.lineTo(points[b].x, points[b].y);
+            ctx.stroke();
+          }
+
+          points.forEach((point, index) => {
+            ctx.beginPath();
+            ctx.fillStyle = index === 8 ? "#ff4757" : "#ffffff";
+            ctx.arc(point.x, point.y, index === 8 ? 7 : 4, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+
+        animationId = requestAnimationFrame(drawHands);
+      }
+
+      function onHandResults(results) {
+        activeLandmarks = results.multiHandLandmarks || [];
+
+        if (activeLandmarks.length > 0) {
+          statusEl.textContent = `${activeLandmarks.length} mano(s) detectada(s)`;
+        } else {
+          statusEl.textContent = "Cámara activa · muestra tu mano";
+        }
+      }
+
+      async function startCamera() {
+        if (cameraStarting) return;
+
+        cameraStarting = true;
+        startBtn.disabled = true;
+        statusEl.textContent = "Iniciando cámara...";
+
+        try {
+          if (!navigator.mediaDevices?.getUserMedia) {
+            throw new Error("La cámara requiere HTTPS o un servidor local.");
+          }
+
+          if (typeof Hands === "undefined" ||
+              typeof Camera === "undefined") {
+            throw new Error("No se pudieron cargar las librerías MediaPipe.");
+          }
+
+          if (!hands) {
+            hands = new Hands({
+              locateFile: file =>
+                `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+
+            hands.setOptions({
+              maxNumHands: 2,
+              modelComplexity: 1,
+              minDetectionConfidence: 0.65,
+              minTrackingConfidence: 0.6
+            });
+
+            hands.onResults(onHandResults);
+          }
+
+          if (!camera) {
+            camera = new Camera(video, {
+              onFrame: async () => {
+                if (hands && video.readyState >= 2) {
+                  await hands.send({ image: video });
+                }
+              },
+              width: 640,
+              height: 480
+            });
+          }
+
+          await camera.start();
+
+          if (animationId === null) {
+            drawHands();
+          }
+
+          statusEl.textContent = "Cámara activa · rastreando manos";
+          startBtn.textContent = "Cámara activada";
+        } catch (error) {
+          console.error(error);
+          statusEl.textContent = error.message || "Error al iniciar la cámara";
+        } finally {
+          cameraStarting = false;
+          startBtn.disabled = false;
+        }
+      }
+
+      startBtn.addEventListener("click", startCamera);
+    })();
+  </script>
+</body>
+</html>
