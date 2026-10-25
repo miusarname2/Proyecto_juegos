@@ -501,6 +501,7 @@ export default function FingerRacer({ onReturnToMenu }) {
 
         <div className="banner-meta">
           <div className="meta-item">
+
             <small>Nueva Versión (SPA)</small>
             <strong style={{ color: '#2ed573' }}>Oscar M. Alvarez G.</strong>
           </div>
