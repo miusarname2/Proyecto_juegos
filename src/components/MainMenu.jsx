@@ -79,16 +79,16 @@ export default function MainMenu({ onSelectGame }) {
 
         <div className="banner-meta">
           <div className="meta-item">
-            <small>Desarrolladores</small>
+            <small>Nueva Versión Unificada (SPA)</small>
+            <strong style={{ color: '#2ed573' }}>Oscar M. Alvarez G.</strong>
+          </div>
+          <div className="meta-item">
+            <small>Versión Original Base</small>
             <strong>Royber Zayas (911670) & Alexandra Parra (914953)</strong>
           </div>
           <div className="meta-item">
             <small>Docente Titular</small>
-            <strong>Jhon Freddy Linares</strong>
-          </div>
-          <div className="meta-item">
-            <small>Tecnología Central</small>
-            <strong>Google MediaPipe Hands · Canvas 2D · WebRTC</strong>
+            <strong>Jhon Freddy Linares · UCC</strong>
           </div>
         </div>
       </header>
@@ -429,9 +429,13 @@ export default function MainMenu({ onSelectGame }) {
           color: 'var(--muted)',
           fontSize: '0.82rem',
           borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          lineHeight: 1.6,
         }}
       >
-        © 2026 Universidad Cooperativa de Colombia (UCC) · Desarrollado por Royber José Zayas Herrera & Alexandra Parra Díaz
+        © 2026 Universidad Cooperativa de Colombia (UCC) · Nueva versión unificada desarrollada por <b>Oscar M. Alvarez G.</b><br />
+        <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+          Juegos conceptuales originales creados por Royber José Zayas Herrera & Alexandra Parra Díaz · Docente: Jhon Freddy Linares
+        </span>
       </footer>
     </div>
   );

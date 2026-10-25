@@ -501,12 +501,16 @@ export default function FingerRacer({ onReturnToMenu }) {
 
         <div className="banner-meta">
           <div className="meta-item">
-            <small>Desarrolladores</small>
+            <small>Nueva Versión (SPA)</small>
+            <strong style={{ color: '#2ed573' }}>Oscar M. Alvarez G.</strong>
+          </div>
+          <div className="meta-item">
+            <small>Juego Original Base</small>
             <strong>Royber Zayas (911670) & Alexandra Parra (914953)</strong>
           </div>
           <div className="meta-item">
             <small>Docente</small>
-            <strong>Jhon Freddy Linares</strong>
+            <strong>Jhon Freddy Linares · UCC</strong>
           </div>
         </div>
       </header>
