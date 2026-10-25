@@ -3,467 +3,118 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Balloon Pop · Commit 2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Balloon Pop | UCC</title>
 <style>
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; padding: 20px; min-height: 100vh;
-    font-family: Arial, sans-serif; color: #f4f7ff;
-    background: #0b1020; display: flex; justify-content: center;
-  }
-  .app { width: min(1050px, 100%); }
-  header, .panel {
-    background: #151f38; border: 1px solid #2c3959;
-    border-radius: 14px; padding: 18px; margin-bottom: 14px;
-  }
-  h1 { margin: 0 0 8px; color: #ad8aff; }
-  p { color: #b9c5e2; line-height: 1.5; }
-  .hud { display: flex; gap: 12px; flex-wrap: wrap; }
-  .stat { flex: 1; min-width: 120px; background: #202c49; padding: 12px; border-radius: 10px; }
-  .stat small { display: block; color: #a8b4d3; margin-bottom: 5px; }
-  .stat strong { font-size: 1.4rem; }
-  .mission {
-    flex: 2; min-width: 180px; display: flex; align-items: center;
-    gap: 12px; background: #202c49; padding: 12px; border-radius: 10px;
-  }
-  #targetSwatch { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #fff8; }
-  #targetName { font-weight: bold; margin-top: 5px; }
-  .stage { overflow: hidden; border-radius: 14px; background: #10192e; }
-  canvas { display: block; width: 100%; height: auto; }
-  video { display: none; }
-  .buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
-  button {
-    border: 0; border-radius: 9px; padding: 12px 17px; cursor: pointer;
-    font-weight: bold; color: white; background: #7658f5;
-  }
-  button.secondary { background: #34415f; }
-  button:disabled { opacity: .6; cursor: wait; }
-  #status { color: #b9c5e2; }
-  .hint { font-size: .9rem; color: #a8b4d3; }
+:root{--bg:#0b1020;--panel:#151f38;--line:#2c3959;--muted:#a8b4d3;--purple:#ad8aff;--green:#38dda0}
+*{box-sizing:border-box}
+body{margin:0;padding:22px;background:radial-gradient(ellipse at top,#252653,var(--bg) 65%);color:#f4f7ff;font-family:Inter,Arial,sans-serif}
+.app{max-width:1200px;margin:auto}
+header,.panel{background:rgba(21,31,56,.95);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:16px;box-shadow:0 12px 32px #0003}
+header{text-align:center;position:relative;overflow:hidden}
+header:before{content:"";position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,#ad8aff,#ff5267,#38dda0)}
+.badge{display:inline-block;padding:7px 12px;border:1px solid #ad8aff66;border-radius:30px;color:#d2c2ff;font-size:.75rem;font-weight:800;letter-spacing:1px}
+h1{font-size:clamp(1.6rem,4vw,2.5rem);margin:14px 0 8px}
+.subtitle{color:var(--muted);margin:0}
+.credits{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-top:18px;font-size:.88rem;color:#d7dfef}
+.credits strong{display:block;color:white;margin-top:4px}
+.hud{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stat,.mission{background:#202c49;border:1px solid #34415f;padding:16px;border-radius:13px}
+.stat small,.mission small{display:block;color:var(--muted);font-size:.8rem;margin-bottom:7px}
+.stat strong{font-size:1.55rem}
+.mission{display:flex;align-items:center;gap:12px}
+#targetSwatch{width:30px;height:30px;border-radius:50%;border:3px solid #ffffff88;flex-shrink:0}
+#targetName{font-weight:900;font-size:1.05rem}
+.game-layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(220px,1fr);gap:16px}
+.stage{overflow:hidden;border-radius:13px;background:#10192e}
+canvas{width:100%;height:auto;display:block}
+video{display:none}
+#status{color:var(--muted);font-size:.9rem;margin-bottom:12px}
+.side h2{font-size:1.05rem;margin-top:0}
+.side p,.hint{color:var(--muted);font-size:.9rem;line-height:1.6}
+button{border:0;border-radius:10px;padding:12px 17px;font-weight:800;color:white;background:linear-gradient(135deg,#987aff,#6848e7);cursor:pointer}
+button.secondary{background:#34415f}
+button:disabled{opacity:.6;cursor:wait}
+.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:13px}
+footer{text-align:center;color:#8090ad;font-size:.8rem;padding:8px}
+@media(max-width:800px){.hud{grid-template-columns:repeat(2,minmax(0,1fr))}.game-layout{grid-template-columns:1fr}body{padding:12px}}
 </style>
 </head>
 <body>
 <div class="app">
-  <header>
-    <h1>🎈 BALLOON POP</h1>
-    <p>Universidad Cooperativa de Colombia · Ingeniería de Sistemas</p>
-    <p>Commit 2: detección de colisiones entre el dedo índice y los globos de colores.</p>
-  </header>
+<header>
+<div class="badge">UNIVERSIDAD COOPERATIVA DE COLOMBIA</div>
+<h1>🎈 BALLOON POP</h1>
+<p class="subtitle">Juego de atención selectiva y seguimiento de manos con visión artificial</p>
+<div class="credits">
+<div>Programa<strong>Ingeniería de Sistemas · 6.º semestre</strong></div>
+<div>Asignatura<strong>Aplicaciones de la Inteligencia Artificial</strong></div>
+<div>Desarrolladores<strong>Royber Zayas (911670) · Alexandra Parra (914953)</strong></div>
+<div>Docente<strong>Jhon Freddy Linares</strong></div>
+</div>
+</header>
 
-  <section class="panel hud">
-    <div class="stat"><small>Puntaje</small><strong id="score">0</strong></div>
-    <div class="stat"><small>Tiempo</small><strong><span id="time">90</span> s</strong></div>
-    <div class="mission">
-      <div id="targetSwatch"></div>
-      <div><small>Color que debes tocar</small><div id="targetName">ROJO</div></div>
-    </div>
-  </section>
+<section class="panel hud">
+<div class="stat"><small>PUNTAJE</small><strong id="score">0</strong></div>
+<div class="stat"><small>TIEMPO</small><strong><span id="time">90</span> s</strong></div>
+<div class="mission"><div id="targetSwatch"></div><div><small>COLOR OBJETIVO</small><div id="targetName">ROJO</div></div></div>
+<div class="stat"><small>ESTADO</small><strong id="gameState" style="font-size:1.1rem;color:#ffd34e">En espera</strong></div>
+</section>
 
-  <section class="panel">
-    <div id="status" aria-live="polite">Cámara apagada. Pulsa «Iniciar juego».</div>
-    <div class="stage">
-      <canvas id="game" width="900" height="560"></canvas>
-    </div>
-    <video id="video" playsinline></video>
-    <div class="buttons">
-      <button id="startBtn">Iniciar juego</button>
-      <button id="restartBtn" class="secondary">Reiniciar</button>
-    </div>
-    <p class="hint">Toca los globos con la punta del dedo índice. Los aciertos suman 10 puntos y los globos de otro color restan 3. Permite el acceso a la cámara cuando el navegador lo solicite.</p>
-  </section>
+<section class="panel game-layout">
+<div>
+<div id="status" aria-live="polite">Cámara apagada. Pulsa «Iniciar juego».</div>
+<div class="stage"><canvas id="game" width="900" height="560"></canvas></div>
+<video id="video" playsinline></video>
+<div class="buttons">
+<button id="startBtn">Iniciar juego</button>
+<button id="restartBtn" class="secondary">Reiniciar</button>
+</div>
+</div>
+<aside class="side">
+<h2>🎯 ¿Cómo jugar?</h2>
+<p>1. Permite el acceso a la cámara.</p>
+<p>2. Coloca la mano frente a la cámara.</p>
+<p>3. Identifica el color que aparece como objetivo.</p>
+<p>4. Toca con la punta del índice los globos de ese color.</p>
+<p>Los aciertos suman 10 puntos. Si tocas un color diferente, pierdes 3 puntos.</p>
+<hr style="border-color:var(--line)">
+<h2>🧠 Tecnología</h2>
+<p>MediaPipe Hands identifica la posición de la punta del índice. El juego compara esa posición con la de cada globo para detectar los contactos.</p>
+<p class="hint">Versión académica · Commit 3: HUD y créditos universitarios.</p>
+</aside>
+</section>
+<footer>Proyecto académico · Universidad Cooperativa de Colombia</footer>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script>
 (() => {
-  "use strict";
-
-  const canvas = document.getElementById("game");
-  const ctx = canvas.getContext("2d");
-  const video = document.getElementById("video");
-  const statusEl = document.getElementById("status");
-  const scoreEl = document.getElementById("score");
-  const timeEl = document.getElementById("time");
-  const targetNameEl = document.getElementById("targetName");
-  const targetSwatch = document.getElementById("targetSwatch");
-  const startBtn = document.getElementById("startBtn");
-  const restartBtn = document.getElementById("restartBtn");
-
-  const W = canvas.width;
-  const H = canvas.height;
-  const GAME_DURATION = 90;
-
-  const COLORS = [
-    { name: "ROJO", hex: "#ff4f6d", light: "#ff9aaa" },
-    { name: "AZUL", hex: "#4aa8ff", light: "#a0d5ff" },
-    { name: "VERDE", hex: "#38dda0", light: "#a4ffdc" },
-    { name: "AMARILLO", hex: "#ffd34e", light: "#fff0a3" },
-    { name: "MORADO", hex: "#ad7aff", light: "#d8baff" }
-  ];
-
-  let hands = null;
-  let camera = null;
-  let cameraReady = false;
-  let running = false;
-  let gameOver = false;
-  let score = 0;
-  let timeLeft = GAME_DURATION;
-  let target = COLORS[0];
-  let balloons = [];
-  let particles = [];
-  let finger = null;
-  let handSeenAt = 0;
-  let spawnTimer = 0;
-  let lastFrame = 0;
-  let animationId = null;
-  let lastHit = 0;
-
-  function chooseTarget() {
-    target = COLORS[Math.floor(Math.random() * COLORS.length)];
-    targetNameEl.textContent = target.name;
-    targetSwatch.style.background = target.hex;
-    targetSwatch.style.boxShadow = `0 0 16px ${target.hex}`;
-  }
-
-  function updateHUD() {
-    scoreEl.textContent = score;
-    timeEl.textContent = Math.max(0, Math.ceil(timeLeft));
-  }
-
-  function resetGame() {
-    running = false;
-    gameOver = false;
-    score = 0;
-    timeLeft = GAME_DURATION;
-    balloons = [];
-    particles = [];
-    finger = null;
-    spawnTimer = 0;
-    lastHit = 0;
-    chooseTarget();
-    updateHUD();
-    draw();
-  }
-
-  function spawnBalloon() {
-    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-    const r = 25 + Math.random() * 10;
-    balloons.push({
-      x: 45 + Math.random() * (W - 90),
-      y: H + r,
-      r,
-      color,
-      speed: 45 + Math.random() * 45,
-      drift: (Math.random() - .5) * 30,
-      phase: Math.random() * Math.PI * 2,
-      alive: true
-    });
-  }
-
-  function drawBackground() {
-    const gradient = ctx.createLinearGradient(0, 0, 0, H);
-    gradient.addColorStop(0, "#182449");
-    gradient.addColorStop(1, "#0b1020");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.strokeStyle = "rgba(180,200,255,.08)";
-    ctx.lineWidth = 1;
-    for (let x = 0; x < W; x += 50) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, H);
-      ctx.stroke();
-    }
-    for (let y = 0; y < H; y += 50) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(W, y);
-      ctx.stroke();
-    }
-  }
-
-  function drawBalloon(b) {
-    ctx.save();
-
-    // Cuerda
-    ctx.strokeStyle = "rgba(235,240,255,.7)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(b.x, b.y + b.r - 2);
-    ctx.quadraticCurveTo(b.x + 8, b.y + b.r + 16, b.x - 1, b.y + b.r + 31);
-    ctx.stroke();
-
-    // Cuerpo del globo
-    ctx.shadowColor = b.color.hex;
-    ctx.shadowBlur = 18;
-    ctx.fillStyle = b.color.hex;
-    ctx.beginPath();
-    ctx.ellipse(b.x, b.y, b.r * .82, b.r, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Brillo
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = "rgba(255,255,255,.65)";
-    ctx.beginPath();
-    ctx.ellipse(
-      b.x - b.r * .25, b.y - b.r * .35,
-      b.r * .13, b.r * .25, -.4, 0, Math.PI * 2
-    );
-    ctx.fill();
-
-    // Nudo
-    ctx.fillStyle = b.color.hex;
-    ctx.beginPath();
-    ctx.moveTo(b.x - 5, b.y + b.r - 2);
-    ctx.lineTo(b.x + 5, b.y + b.r - 2);
-    ctx.lineTo(b.x, b.y + b.r + 7);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-  function addParticles(x, y, color) {
-    for (let i = 0; i < 16; i++) {
-      particles.push({
-        x, y,
-        vx: (Math.random() - .5) * 220,
-        vy: (Math.random() - .5) * 220,
-        life: .5,
-        color
-      });
-    }
-  }
-
-  function updateParticles(dt) {
-    particles.forEach(p => {
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.life -= dt;
-    });
-    particles = particles.filter(p => p.life > 0);
-  }
-
-  function drawParticles() {
-    for (const p of particles) {
-      ctx.globalAlpha = Math.max(0, p.life / .5);
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  function checkCollision() {
-    if (!finger || performance.now() - handSeenAt > 700) return;
-
-    const now = performance.now();
-    if (now - lastHit < 180) return;
-
-    for (let i = balloons.length - 1; i >= 0; i--) {
-      const b = balloons[i];
-      const dx = finger.x - b.x;
-      const dy = finger.y - b.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (distance <= b.r + 12) {
-        lastHit = now;
-        b.alive = false;
-
-        if (b.color.name === target.name) {
-          score += 10;
-          statusEl.textContent = "¡Acierto! Globo " + b.color.name + ": +10 puntos.";
-          addParticles(b.x, b.y, b.color.hex);
-          chooseTarget();
-        } else {
-          score = Math.max(0, score - 3);
-          statusEl.textContent = "Color incorrecto: -" + 3 + " puntos. Busca el globo " + target.name + ".";
-          addParticles(b.x, b.y, "#ff4757");
-        }
-
-        updateHUD();
-        break;
-      }
-    }
-  }
-
-  function finishGame() {
-    running = false;
-    gameOver = true;
-    timeLeft = 0;
-    updateHUD();
-    statusEl.textContent = "Juego terminado. Puntaje final: " + score + ". Pulsa Reiniciar para volver a jugar.";
-    draw();
-  }
-
-  function update(dt) {
-    if (!running) return;
-
-    timeLeft -= dt;
-    if (timeLeft <= 0) {
-      finishGame();
-      return;
-    }
-
-    spawnTimer += dt;
-    const interval = Math.max(.42, .85 - (GAME_DURATION - timeLeft) * .003);
-    if (spawnTimer >= interval) {
-      spawnTimer = 0;
-      spawnBalloon();
-    }
-
-    for (const b of balloons) {
-      b.y -= b.speed * dt;
-      b.x += Math.sin(performance.now() / 450 + b.phase) * b.drift * dt;
-      b.x = Math.max(b.r, Math.min(W - b.r, b.x));
-    }
-
-    balloons = balloons.filter(b => b.y + b.r + 40 > 0 && b.alive);
-    checkCollision();
-    updateParticles(dt);
-    updateHUD();
-    draw();
-  }
-
-  function draw() {
-    drawBackground();
-
-    for (const b of balloons) drawBalloon(b);
-    drawParticles();
-
-    if (finger && performance.now() - handSeenAt < 700) {
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(finger.x, finger.y, 14, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(finger.x, finger.y, 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    if (!running) {
-      ctx.fillStyle = "rgba(5, 10, 25, .72)";
-      ctx.fillRect(0, 0, W, H);
-      ctx.textAlign = "center";
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 34px Arial";
-      ctx.fillText(gameOver ? "¡TIEMPO TERMINADO!" : "BALLOON POP", W / 2, H / 2 - 18);
-      ctx.font = "18px Arial";
-      ctx.fillStyle = "#c7d2e8";
-      ctx.fillText(
-        gameOver ? "Puntaje final: " + score : "Pulsa Iniciar juego para comenzar",
-        W / 2, H / 2 + 22
-      );
-    }
-  }
-
-  function frame(now) {
-    if (!lastFrame) lastFrame = now;
-    const dt = Math.min((now - lastFrame) / 1000, .04);
-    lastFrame = now;
-
-    if (running) {
-      update(dt);
-      if (running) animationId = requestAnimationFrame(frame);
-      else animationId = null;
-    } else {
-      animationId = null;
-    }
-  }
-
-  function onResults(results) {
-    const landmarks = results.multiHandLandmarks;
-
-    if (landmarks && landmarks.length) {
-      const tip = landmarks[0][8];
-      finger = {
-        x: (1 - tip.x) * W,
-        y: tip.y * H
-      };
-      handSeenAt = performance.now();
-
-      if (running) {
-        statusEl.textContent = "Mano detectada. Busca el globo " + target.name + ".";
-      } else if (!gameOver) {
-        statusEl.textContent = "Mano detectada. Pulsa Iniciar juego para comenzar.";
-      }
-    } else {
-      finger = null;
-      if (cameraReady && running) {
-        statusEl.textContent = "No se detecta la mano. Coloca el índice frente a la cámara.";
-      }
-    }
-  }
-
-  async function startCamera() {
-    if (cameraReady) return;
-
-    startBtn.disabled = true;
-    statusEl.textContent = "Solicitando acceso a la cámara…";
-
-    try {
-      hands = new Hands({
-        locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-      });
-
-      hands.setOptions({
-        maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: .55,
-        minTrackingConfidence: .5
-      });
-
-      hands.onResults(onResults);
-
-      camera = new Camera(video, {
-        onFrame: async () => {
-          if (hands) await hands.send({ image: video });
-        },
-        width: 640,
-        height: 480
-      });
-
-      await camera.start();
-      cameraReady = true;
-      statusEl.textContent = "Cámara activa. Pulsa Iniciar juego.";
-    } catch (err) {
-      console.error(err);
-      statusEl.textContent = "No se pudo iniciar la cámara. Revisa los permisos y abre la página mediante localhost o HTTPS.";
-    } finally {
-      startBtn.disabled = false;
-    }
-  }
-
-  startBtn.addEventListener("click", async () => {
-    await startCamera();
-    if (!cameraReady) return;
-
-    resetGame();
-    running = true;
-    lastFrame = 0;
-    statusEl.textContent = "¡Comienza! Toca los globos del color " + target.name + ".";
-    animationId = requestAnimationFrame(frame);
-  });
-
-  restartBtn.addEventListener("click", () => {
-    resetGame();
-    if (animationId) cancelAnimationFrame(animationId);
-    animationId = null;
-    statusEl.textContent = cameraReady
-      ? "Partida reiniciada. Pulsa Iniciar juego."
-      : "Cámara apagada. Pulsa Iniciar juego.";
-  });
-
-  chooseTarget();
-  updateHUD();
-  draw();
+"use strict";
+const canvas=document.getElementById("game"),ctx=canvas.getContext("2d"),video=document.getElementById("video");
+const statusEl=document.getElementById("status"),scoreEl=document.getElementById("score"),timeEl=document.getElementById("time"),targetNameEl=document.getElementById("targetName"),targetSwatch=document.getElementById("targetSwatch"),stateEl=document.getElementById("gameState"),startBtn=document.getElementById("startBtn"),restartBtn=document.getElementById("restartBtn");
+const W=canvas.width,H=canvas.height,DURATION=90;
+const COLORS=[{name:"ROJO",hex:"#ff4f6d"},{name:"AZUL",hex:"#4aa8ff"},{name:"VERDE",hex:"#38dda0"},{name:"AMARILLO",hex:"#ffd34e"},{name:"MORADO",hex:"#ad7aff"}];
+let hands=null,camera=null,cameraReady=false,running=false,gameOver=false,score=0,timeLeft=DURATION,target=COLORS[0],balloons=[],particles=[],finger=null,handSeenAt=0,spawnTimer=0,lastFrame=0,animationId=null,lastHit=0;
+function chooseTarget(){target=COLORS[Math.floor(Math.random()*COLORS.length)];targetNameEl.textContent=target.name;targetSwatch.style.background=target.hex;targetSwatch.style.boxShadow=`0 0 16px ${target.hex}`}
+function hud(){scoreEl.textContent=score;timeEl.textContent=Math.max(0,Math.ceil(timeLeft));stateEl.textContent=running?"Jugando":gameOver?"Finalizado":"En espera";stateEl.style.color=running?"#38dda0":gameOver?"#ff6878":"#ffd34e"}
+function reset(){running=false;gameOver=false;score=0;timeLeft=DURATION;balloons=[];particles=[];finger=null;spawnTimer=0;lastHit=0;chooseTarget();hud();draw()}
+function spawn(){const color=COLORS[Math.floor(Math.random()*COLORS.length)],r=25+Math.random()*10;balloons.push({x:45+Math.random()*(W-90),y:H+r,r,color,speed:45+Math.random()*45,drift:(Math.random()-.5)*30,phase:Math.random()*Math.PI*2,alive:true})}
+function background(){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#182449");g.addColorStop(1,"#0b1020");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.strokeStyle="#b4c8ff12";ctx.lineWidth=1;for(let x=0;x<W;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}}
+function drawBalloon(b){ctx.save();ctx.strokeStyle="#ebf0ffb3";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(b.x,b.y+b.r-2);ctx.quadraticCurveTo(b.x+8,b.y+b.r+16,b.x-1,b.y+b.r+31);ctx.stroke();ctx.shadowColor=b.color.hex;ctx.shadowBlur=18;ctx.fillStyle=b.color.hex;ctx.beginPath();ctx.ellipse(b.x,b.y,b.r*.82,b.r,0,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle="#ffffffa6";ctx.beginPath();ctx.ellipse(b.x-b.r*.25,b.y-b.r*.35,b.r*.13,b.r*.25,-.4,0,Math.PI*2);ctx.fill();ctx.fillStyle=b.color.hex;ctx.beginPath();ctx.moveTo(b.x-5,b.y+b.r-2);ctx.lineTo(b.x+5,b.y+b.r-2);ctx.lineTo(b.x,b.y+b.r+7);ctx.closePath();ctx.fill();ctx.restore()}
+function burst(x,y,color){for(let i=0;i<16;i++)particles.push({x,y,vx:(Math.random()-.5)*220,vy:(Math.random()-.5)*220,life:.5,color})}
+function drawParticles(dt){particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;ctx.globalAlpha=Math.max(0,p.life/.5);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill()});ctx.globalAlpha=1;particles=particles.filter(p=>p.life>0)}
+function checkHit(){if(!finger||performance.now()-handSeenAt>700||performance.now()-lastHit<180)return;for(let i=balloons.length-1;i>=0;i--){const b=balloons[i],dx=finger.x-b.x,dy=finger.y-b.y;if(Math.hypot(dx,dy)<=b.r+12){lastHit=performance.now();b.alive=false;if(b.color.name===target.name){score+=10;statusEl.textContent="¡Acierto! Globo "+b.color.name+": +10 puntos.";burst(b.x,b.y,b.color.hex);chooseTarget()}else{score=Math.max(0,score-3);statusEl.textContent="Color incorrecto: -3 puntos. Busca el globo "+target.name+".";burst(b.x,b.y,"#ff4757")}hud();break}}}
+function finish(){running=false;gameOver=true;timeLeft=0;hud();statusEl.textContent="Juego terminado. Puntaje final: "+score+". Pulsa Reiniciar para volver a jugar.";draw()}
+function update(dt){if(!running)return;timeLeft-=dt;if(timeLeft<=0){finish();return}spawnTimer+=dt;if(spawnTimer>=Math.max(.42,.85-(DURATION-timeLeft)*.003)){spawnTimer=0;spawn()}for(const b of balloons){b.y-=b.speed*dt;b.x+=Math.sin(performance.now()/450+b.phase)*b.drift*dt;b.x=Math.max(b.r,Math.min(W-b.r,b.x))}balloons=balloons.filter(b=>b.y+b.r+40>0&&b.alive);checkHit();drawParticles(dt);hud();draw()}
+function draw(){background();balloons.forEach(drawBalloon);if(finger&&performance.now()-handSeenAt<700){ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.beginPath();ctx.arc(finger.x,finger.y,14,0,Math.PI*2);ctx.stroke();ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(finger.x,finger.y,4,0,Math.PI*2);ctx.fill()}drawParticles(0);if(!running){ctx.fillStyle="#050a19b8";ctx.fillRect(0,0,W,H);ctx.textAlign="center";ctx.fillStyle="#fff";ctx.font="bold 34px Arial";ctx.fillText(gameOver?"¡TIEMPO TERMINADO!":"BALLOON POP",W/2,H/2-18);ctx.font="18px Arial";ctx.fillStyle="#c7d2e8";ctx.fillText(gameOver?"Puntaje final: "+score:"Pulsa Iniciar juego para comenzar",W/2,H/2+22)}}
+function frame(now){if(!lastFrame)lastFrame=now;const dt=Math.min((now-lastFrame)/1000,.04);lastFrame=now;if(running){update(dt);if(running)animationId=requestAnimationFrame(frame);else animationId=null}else animationId=null}
+function results(res){const lm=res.multiHandLandmarks;if(lm&&lm.length){const tip=lm[0][8];finger={x:(1-tip.x)*W,y:tip.y*H};handSeenAt=performance.now();if(running)statusEl.textContent="Mano detectada. Busca el globo "+target.name+"."}else{finger=null;if(cameraReady&&running)statusEl.textContent="No se detecta la mano. Coloca el índice frente a la cámara."}}
+async function startCamera(){if(cameraReady)return;startBtn.disabled=true;statusEl.textContent="Solicitando acceso a la cámara…";try{hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.55,minTrackingConfidence:.5});hands.onResults(results);camera=new Camera(video,{onFrame:async()=>{if(hands)await hands.send({image:video})},width:640,height:480});await camera.start();cameraReady=true;statusEl.textContent="Cámara activa. Pulsa Iniciar juego."}catch(e){console.error(e);statusEl.textContent="No se pudo iniciar la cámara. Revisa permisos y utiliza localhost o HTTPS."}finally{startBtn.disabled=false}}
+startBtn.addEventListener("click",async()=>{await startCamera();if(!cameraReady)return;reset();running=true;lastFrame=0;hud();statusEl.textContent="¡Comienza! Toca los globos del color "+target.name+".";animationId=requestAnimationFrame(frame)});
+restartBtn.addEventListener("click",()=>{if(animationId)cancelAnimationFrame(animationId);animationId=null;reset();statusEl.textContent=cameraReady?"Partida reiniciada. Pulsa Iniciar juego.":"Cámara apagada. Pulsa Iniciar juego."});
+chooseTarget();hud();draw();
 })();
 </script>
 </body>
