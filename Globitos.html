@@ -2,202 +2,469 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Balloon Pop · Hand Tracking</title>
-  <style>
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 20px;
-      background: #0b1020;
-      color: #f4f7ff;
-      font-family: Arial, sans-serif;
-      text-align: center;
-    }
-
-    h1 { color: #7c5cff; }
-
-    .stage {
-      position: relative;
-      width: min(960px, 100%);
-      margin: 20px auto;
-      aspect-ratio: 16 / 9;
-      background: #10172b;
-      overflow: hidden;
-      border: 1px solid #34405e;
-      border-radius: 12px;
-    }
-
-    video, canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    video {
-      object-fit: cover;
-      transform: scaleX(-1);
-      opacity: 0.35;
-    }
-
-    canvas { z-index: 2; }
-
-    button {
-      padding: 12px 20px;
-      border: 0;
-      border-radius: 8px;
-      background: #7c5cff;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    #status { margin: 12px; color: #a8b4d3; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balloon Pop · Commit 2</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px; min-height: 100vh;
+    font-family: Arial, sans-serif; color: #f4f7ff;
+    background: #0b1020; display: flex; justify-content: center;
+  }
+  .app { width: min(1050px, 100%); }
+  header, .panel {
+    background: #151f38; border: 1px solid #2c3959;
+    border-radius: 14px; padding: 18px; margin-bottom: 14px;
+  }
+  h1 { margin: 0 0 8px; color: #ad8aff; }
+  p { color: #b9c5e2; line-height: 1.5; }
+  .hud { display: flex; gap: 12px; flex-wrap: wrap; }
+  .stat { flex: 1; min-width: 120px; background: #202c49; padding: 12px; border-radius: 10px; }
+  .stat small { display: block; color: #a8b4d3; margin-bottom: 5px; }
+  .stat strong { font-size: 1.4rem; }
+  .mission {
+    flex: 2; min-width: 180px; display: flex; align-items: center;
+    gap: 12px; background: #202c49; padding: 12px; border-radius: 10px;
+  }
+  #targetSwatch { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #fff8; }
+  #targetName { font-weight: bold; margin-top: 5px; }
+  .stage { overflow: hidden; border-radius: 14px; background: #10192e; }
+  canvas { display: block; width: 100%; height: auto; }
+  video { display: none; }
+  .buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  button {
+    border: 0; border-radius: 9px; padding: 12px 17px; cursor: pointer;
+    font-weight: bold; color: white; background: #7658f5;
+  }
+  button.secondary { background: #34415f; }
+  button:disabled { opacity: .6; cursor: wait; }
+  #status { color: #b9c5e2; }
+  .hint { font-size: .9rem; color: #a8b4d3; }
+</style>
 </head>
 <body>
-  <h1>BALLOON POP · HAND TRACKING</h1>
-  <p>Ingeniería de Sistemas · Aplicaciones de la Inteligencia Artificial</p>
-  <div id="status">Cámara apagada</div>
+<div class="app">
+  <header>
+    <h1>🎈 BALLOON POP</h1>
+    <p>Universidad Cooperativa de Colombia · Ingeniería de Sistemas</p>
+    <p>Commit 2: detección de colisiones entre el dedo índice y los globos de colores.</p>
+  </header>
 
-  <div class="stage">
-    <video id="video" playsinline muted></video>
-    <canvas id="game" width="960" height="540"></canvas>
-  </div>
+  <section class="panel hud">
+    <div class="stat"><small>Puntaje</small><strong id="score">0</strong></div>
+    <div class="stat"><small>Tiempo</small><strong><span id="time">90</span> s</strong></div>
+    <div class="mission">
+      <div id="targetSwatch"></div>
+      <div><small>Color que debes tocar</small><div id="targetName">ROJO</div></div>
+    </div>
+  </section>
 
-  <button id="startBtn">Activar cámara</button>
+  <section class="panel">
+    <div id="status" aria-live="polite">Cámara apagada. Pulsa «Iniciar juego».</div>
+    <div class="stage">
+      <canvas id="game" width="900" height="560"></canvas>
+    </div>
+    <video id="video" playsinline></video>
+    <div class="buttons">
+      <button id="startBtn">Iniciar juego</button>
+      <button id="restartBtn" class="secondary">Reiniciar</button>
+    </div>
+    <p class="hint">Toca los globos con la punta del dedo índice. Los aciertos suman 10 puntos y los globos de otro color restan 3. Permite el acceso a la cámara cuando el navegador lo solicite.</p>
+  </section>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"
-    crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
-    crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script>
+(() => {
+  "use strict";
 
-  <script>
-    (() => {
-      "use strict";
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const video = document.getElementById("video");
+  const statusEl = document.getElementById("status");
+  const scoreEl = document.getElementById("score");
+  const timeEl = document.getElementById("time");
+  const targetNameEl = document.getElementById("targetName");
+  const targetSwatch = document.getElementById("targetSwatch");
+  const startBtn = document.getElementById("startBtn");
+  const restartBtn = document.getElementById("restartBtn");
 
-      const canvas = document.getElementById("game");
-      const ctx = canvas.getContext("2d");
-      const video = document.getElementById("video");
-      const startBtn = document.getElementById("startBtn");
-      const statusEl = document.getElementById("status");
+  const W = canvas.width;
+  const H = canvas.height;
+  const GAME_DURATION = 90;
 
-      const W = canvas.width;
-      const H = canvas.height;
+  const COLORS = [
+    { name: "ROJO", hex: "#ff4f6d", light: "#ff9aaa" },
+    { name: "AZUL", hex: "#4aa8ff", light: "#a0d5ff" },
+    { name: "VERDE", hex: "#38dda0", light: "#a4ffdc" },
+    { name: "AMARILLO", hex: "#ffd34e", light: "#fff0a3" },
+    { name: "MORADO", hex: "#ad7aff", light: "#d8baff" }
+  ];
 
-      let hands = null;
-      let camera = null;
-      let activeLandmarks = [];
-      let animationId = null;
-      let cameraStarting = false;
+  let hands = null;
+  let camera = null;
+  let cameraReady = false;
+  let running = false;
+  let gameOver = false;
+  let score = 0;
+  let timeLeft = GAME_DURATION;
+  let target = COLORS[0];
+  let balloons = [];
+  let particles = [];
+  let finger = null;
+  let handSeenAt = 0;
+  let spawnTimer = 0;
+  let lastFrame = 0;
+  let animationId = null;
+  let lastHit = 0;
 
-      function drawHands() {
-        ctx.clearRect(0, 0, W, H);
+  function chooseTarget() {
+    target = COLORS[Math.floor(Math.random() * COLORS.length)];
+    targetNameEl.textContent = target.name;
+    targetSwatch.style.background = target.hex;
+    targetSwatch.style.boxShadow = `0 0 16px ${target.hex}`;
+  }
 
-        for (const landmarks of activeLandmarks) {
-          const points = landmarks.map(point => ({
-            x: (1 - point.x) * W,
-            y: point.y * H
-          }));
+  function updateHUD() {
+    scoreEl.textContent = score;
+    timeEl.textContent = Math.max(0, Math.ceil(timeLeft));
+  }
 
-          ctx.strokeStyle = "#b9aaff";
-          ctx.lineWidth = 3;
+  function resetGame() {
+    running = false;
+    gameOver = false;
+    score = 0;
+    timeLeft = GAME_DURATION;
+    balloons = [];
+    particles = [];
+    finger = null;
+    spawnTimer = 0;
+    lastHit = 0;
+    chooseTarget();
+    updateHUD();
+    draw();
+  }
 
-          for (const [a, b] of HAND_CONNECTIONS) {
-            ctx.beginPath();
-            ctx.moveTo(points[a].x, points[a].y);
-            ctx.lineTo(points[b].x, points[b].y);
-            ctx.stroke();
-          }
+  function spawnBalloon() {
+    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    const r = 25 + Math.random() * 10;
+    balloons.push({
+      x: 45 + Math.random() * (W - 90),
+      y: H + r,
+      r,
+      color,
+      speed: 45 + Math.random() * 45,
+      drift: (Math.random() - .5) * 30,
+      phase: Math.random() * Math.PI * 2,
+      alive: true
+    });
+  }
 
-          points.forEach((point, index) => {
-            ctx.beginPath();
-            ctx.fillStyle = index === 8 ? "#ff4757" : "#ffffff";
-            ctx.arc(point.x, point.y, index === 8 ? 7 : 4, 0, Math.PI * 2);
-            ctx.fill();
-          });
-        }
+  function drawBackground() {
+    const gradient = ctx.createLinearGradient(0, 0, 0, H);
+    gradient.addColorStop(0, "#182449");
+    gradient.addColorStop(1, "#0b1020");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, W, H);
 
-        animationId = requestAnimationFrame(drawHands);
-      }
+    ctx.strokeStyle = "rgba(180,200,255,.08)";
+    ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 50) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, H);
+      ctx.stroke();
+    }
+    for (let y = 0; y < H; y += 50) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y);
+      ctx.stroke();
+    }
+  }
 
-      function onHandResults(results) {
-        activeLandmarks = results.multiHandLandmarks || [];
+  function drawBalloon(b) {
+    ctx.save();
 
-        if (activeLandmarks.length > 0) {
-          statusEl.textContent = `${activeLandmarks.length} mano(s) detectada(s)`;
+    // Cuerda
+    ctx.strokeStyle = "rgba(235,240,255,.7)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y + b.r - 2);
+    ctx.quadraticCurveTo(b.x + 8, b.y + b.r + 16, b.x - 1, b.y + b.r + 31);
+    ctx.stroke();
+
+    // Cuerpo del globo
+    ctx.shadowColor = b.color.hex;
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = b.color.hex;
+    ctx.beginPath();
+    ctx.ellipse(b.x, b.y, b.r * .82, b.r, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Brillo
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "rgba(255,255,255,.65)";
+    ctx.beginPath();
+    ctx.ellipse(
+      b.x - b.r * .25, b.y - b.r * .35,
+      b.r * .13, b.r * .25, -.4, 0, Math.PI * 2
+    );
+    ctx.fill();
+
+    // Nudo
+    ctx.fillStyle = b.color.hex;
+    ctx.beginPath();
+    ctx.moveTo(b.x - 5, b.y + b.r - 2);
+    ctx.lineTo(b.x + 5, b.y + b.r - 2);
+    ctx.lineTo(b.x, b.y + b.r + 7);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function addParticles(x, y, color) {
+    for (let i = 0; i < 16; i++) {
+      particles.push({
+        x, y,
+        vx: (Math.random() - .5) * 220,
+        vy: (Math.random() - .5) * 220,
+        life: .5,
+        color
+      });
+    }
+  }
+
+  function updateParticles(dt) {
+    particles.forEach(p => {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.life -= dt;
+    });
+    particles = particles.filter(p => p.life > 0);
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      ctx.globalAlpha = Math.max(0, p.life / .5);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function checkCollision() {
+    if (!finger || performance.now() - handSeenAt > 700) return;
+
+    const now = performance.now();
+    if (now - lastHit < 180) return;
+
+    for (let i = balloons.length - 1; i >= 0; i--) {
+      const b = balloons[i];
+      const dx = finger.x - b.x;
+      const dy = finger.y - b.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance <= b.r + 12) {
+        lastHit = now;
+        b.alive = false;
+
+        if (b.color.name === target.name) {
+          score += 10;
+          statusEl.textContent = "¡Acierto! Globo " + b.color.name + ": +10 puntos.";
+          addParticles(b.x, b.y, b.color.hex);
+          chooseTarget();
         } else {
-          statusEl.textContent = "Cámara activa · muestra tu mano";
+          score = Math.max(0, score - 3);
+          statusEl.textContent = "Color incorrecto: -" + 3 + " puntos. Busca el globo " + target.name + ".";
+          addParticles(b.x, b.y, "#ff4757");
         }
+
+        updateHUD();
+        break;
       }
+    }
+  }
 
-      async function startCamera() {
-        if (cameraStarting) return;
+  function finishGame() {
+    running = false;
+    gameOver = true;
+    timeLeft = 0;
+    updateHUD();
+    statusEl.textContent = "Juego terminado. Puntaje final: " + score + ". Pulsa Reiniciar para volver a jugar.";
+    draw();
+  }
 
-        cameraStarting = true;
-        startBtn.disabled = true;
-        statusEl.textContent = "Iniciando cámara...";
+  function update(dt) {
+    if (!running) return;
 
-        try {
-          if (!navigator.mediaDevices?.getUserMedia) {
-            throw new Error("La cámara requiere HTTPS o un servidor local.");
-          }
+    timeLeft -= dt;
+    if (timeLeft <= 0) {
+      finishGame();
+      return;
+    }
 
-          if (typeof Hands === "undefined" ||
-              typeof Camera === "undefined") {
-            throw new Error("No se pudieron cargar las librerías MediaPipe.");
-          }
+    spawnTimer += dt;
+    const interval = Math.max(.42, .85 - (GAME_DURATION - timeLeft) * .003);
+    if (spawnTimer >= interval) {
+      spawnTimer = 0;
+      spawnBalloon();
+    }
 
-          if (!hands) {
-            hands = new Hands({
-              locateFile: file =>
-                `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-            });
+    for (const b of balloons) {
+      b.y -= b.speed * dt;
+      b.x += Math.sin(performance.now() / 450 + b.phase) * b.drift * dt;
+      b.x = Math.max(b.r, Math.min(W - b.r, b.x));
+    }
 
-            hands.setOptions({
-              maxNumHands: 2,
-              modelComplexity: 1,
-              minDetectionConfidence: 0.65,
-              minTrackingConfidence: 0.6
-            });
+    balloons = balloons.filter(b => b.y + b.r + 40 > 0 && b.alive);
+    checkCollision();
+    updateParticles(dt);
+    updateHUD();
+    draw();
+  }
 
-            hands.onResults(onHandResults);
-          }
+  function draw() {
+    drawBackground();
 
-          if (!camera) {
-            camera = new Camera(video, {
-              onFrame: async () => {
-                if (hands && video.readyState >= 2) {
-                  await hands.send({ image: video });
-                }
-              },
-              width: 640,
-              height: 480
-            });
-          }
+    for (const b of balloons) drawBalloon(b);
+    drawParticles();
 
-          await camera.start();
+    if (finger && performance.now() - handSeenAt < 700) {
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(finger.x, finger.y, 14, 0, Math.PI * 2);
+      ctx.stroke();
 
-          if (animationId === null) {
-            drawHands();
-          }
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(finger.x, finger.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
-          statusEl.textContent = "Cámara activa · rastreando manos";
-          startBtn.textContent = "Cámara activada";
-        } catch (error) {
-          console.error(error);
-          statusEl.textContent = error.message || "Error al iniciar la cámara";
-        } finally {
-          cameraStarting = false;
-          startBtn.disabled = false;
-        }
+    if (!running) {
+      ctx.fillStyle = "rgba(5, 10, 25, .72)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 34px Arial";
+      ctx.fillText(gameOver ? "¡TIEMPO TERMINADO!" : "BALLOON POP", W / 2, H / 2 - 18);
+      ctx.font = "18px Arial";
+      ctx.fillStyle = "#c7d2e8";
+      ctx.fillText(
+        gameOver ? "Puntaje final: " + score : "Pulsa Iniciar juego para comenzar",
+        W / 2, H / 2 + 22
+      );
+    }
+  }
+
+  function frame(now) {
+    if (!lastFrame) lastFrame = now;
+    const dt = Math.min((now - lastFrame) / 1000, .04);
+    lastFrame = now;
+
+    if (running) {
+      update(dt);
+      if (running) animationId = requestAnimationFrame(frame);
+      else animationId = null;
+    } else {
+      animationId = null;
+    }
+  }
+
+  function onResults(results) {
+    const landmarks = results.multiHandLandmarks;
+
+    if (landmarks && landmarks.length) {
+      const tip = landmarks[0][8];
+      finger = {
+        x: (1 - tip.x) * W,
+        y: tip.y * H
+      };
+      handSeenAt = performance.now();
+
+      if (running) {
+        statusEl.textContent = "Mano detectada. Busca el globo " + target.name + ".";
+      } else if (!gameOver) {
+        statusEl.textContent = "Mano detectada. Pulsa Iniciar juego para comenzar.";
       }
+    } else {
+      finger = null;
+      if (cameraReady && running) {
+        statusEl.textContent = "No se detecta la mano. Coloca el índice frente a la cámara.";
+      }
+    }
+  }
 
-      startBtn.addEventListener("click", startCamera);
-    })();
-  </script>
+  async function startCamera() {
+    if (cameraReady) return;
+
+    startBtn.disabled = true;
+    statusEl.textContent = "Solicitando acceso a la cámara…";
+
+    try {
+      hands = new Hands({
+        locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      });
+
+      hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: .55,
+        minTrackingConfidence: .5
+      });
+
+      hands.onResults(onResults);
+
+      camera = new Camera(video, {
+        onFrame: async () => {
+          if (hands) await hands.send({ image: video });
+        },
+        width: 640,
+        height: 480
+      });
+
+      await camera.start();
+      cameraReady = true;
+      statusEl.textContent = "Cámara activa. Pulsa Iniciar juego.";
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = "No se pudo iniciar la cámara. Revisa los permisos y abre la página mediante localhost o HTTPS.";
+    } finally {
+      startBtn.disabled = false;
+    }
+  }
+
+  startBtn.addEventListener("click", async () => {
+    await startCamera();
+    if (!cameraReady) return;
+
+    resetGame();
+    running = true;
+    lastFrame = 0;
+    statusEl.textContent = "¡Comienza! Toca los globos del color " + target.name + ".";
+    animationId = requestAnimationFrame(frame);
+  });
+
+  restartBtn.addEventListener("click", () => {
+    resetGame();
+    if (animationId) cancelAnimationFrame(animationId);
+    animationId = null;
+    statusEl.textContent = cameraReady
+      ? "Partida reiniciada. Pulsa Iniciar juego."
+      : "Cámara apagada. Pulsa Iniciar juego.";
+  });
+
+  chooseTarget();
+  updateHUD();
+  draw();
+})();
+</script>
 </body>
 </html>
