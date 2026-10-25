@@ -3,289 +3,206 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Finger Racer | UCC</title>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#101827;color:#f5f7fa}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#101827;color:#f5f7fa}
 header{text-align:center;padding:20px;background:#172538;border-bottom:3px solid #20c997}
-h1{margin:0;color:#20c997}
-header p{margin:8px 0 0;color:#d5deea}
+h1{margin:0;color:#20c997}header p{color:#d5deea}
 main{max-width:1150px;margin:auto;padding:18px;display:grid;grid-template-columns:2fr 1fr;gap:18px}
 .panel{background:#1b293b;border-radius:14px;padding:16px;margin-bottom:16px}
 canvas{width:100%;display:block;background:#263548;border-radius:10px}
 .hud{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 .stat{background:#101827;padding:10px;border-radius:8px;text-align:center}
-.stat small{display:block;color:#9fb1c7;margin-bottom:5px}
-.stat strong{font-size:20px;color:#20c997}
+.stat small{display:block;color:#9fb1c7;margin-bottom:5px}.stat strong{font-size:20px;color:#20c997}
 button{border:0;border-radius:8px;padding:12px 18px;background:#20c997;color:#10212a;font-weight:bold;cursor:pointer;margin:8px 4px 0 0}
-button:hover{filter:brightness(1.1)}
-#status{color:#ffd166;font-weight:bold}
-#camera{display:none}
-.note{color:#bdcad9;line-height:1.5;font-size:14px}
-.record{font-size:28px;font-weight:bold;color:#ffd166}
-.report{background:#101827;border-left:4px solid #20c997;border-radius:8px;padding:12px;margin-top:10px;line-height:1.5}
-.report h3{margin-top:0;color:#20c997}
-.metric{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #344358;padding:7px 0}
-.metric:last-child{border-bottom:0}
+#status{color:#ffd166;font-weight:bold}#camera{display:none}
+.note{color:#bdcad9;line-height:1.5;font-size:14px}.record{font-size:28px;color:#ffd166;font-weight:bold}
+.report{background:#101827;border-left:4px solid #20c997;border-radius:8px;padding:12px;line-height:1.5}
+.metric{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #344358}
 footer{text-align:center;padding:16px;color:#9fb1c7;font-size:13px}
 @media(max-width:760px){main{grid-template-columns:1fr}.hud{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <header>
-  <h1>🏎️ FINGER RACER</h1>
-  <p>Universidad Cooperativa de Colombia · Ingeniería de Sistemas · 6.º semestre</p>
+<h1>🏎️ FINGER RACER</h1>
+<p>Universidad Cooperativa de Colombia · Ingeniería de Sistemas · 6.º semestre</p>
 </header>
-
 <main>
-  <section>
-    <div class="panel">
-      <div class="hud">
-        <div class="stat"><small>Puntaje</small><strong id="score">0</strong></div>
-        <div class="stat"><small>Tiempo</small><strong id="time">60</strong></div>
-        <div class="stat"><small>Velocidad</small><strong id="speed">1x</strong></div>
-        <div class="stat"><small>Récord</small><strong id="best">0</strong></div>
-      </div>
-      <canvas id="game" width="720" height="480"></canvas>
-      <button id="start">Iniciar partida</button>
-      <button id="cameraBtn">Activar cámara</button>
-      <p>Estado: <span id="status">Presiona “Iniciar partida”.</span></p>
-      <video id="camera" playsinline></video>
-    </div>
-
-    <div class="panel">
-      <h2>📊 Informe de desempeño</h2>
-      <p class="note">El informe se genera al finalizar cada partida y describe únicamente los resultados obtenidos en el juego.</p>
-      <div id="report" class="report">Completa una partida para generar el informe.</div>
-    </div>
-  </section>
-
-  <aside>
-    <div class="panel">
-      <h2>¿Cómo jugar?</h2>
-      <p class="note">1. Permite el acceso a la cámara.<br>
-      2. Muestra tu mano frente a la cámara.<br>
-      3. Mueve el dedo índice a izquierda o derecha.<br>
-      4. Recoge monedas y evita las rocas.</p>
-      <hr>
-      <h3>🏆 Récord personal</h3>
-      <div class="record" id="recordText">0 puntos</div>
-      <p class="note">El récord se conserva en este navegador con <code>localStorage</code>.</p>
-    </div>
-    <div class="panel">
-      <h3>🧠 Alcance de los indicadores</h3>
-      <p class="note">Se analizan puntaje, monedas recogidas, duración de la partida y colisiones. Estos datos no son pruebas psicológicas validadas ni permiten emitir diagnósticos clínicos.</p>
-      <hr>
-      <h3>Créditos académicos</h3>
-      <p class="note"><strong>Programa:</strong> Ingeniería de Sistemas<br>
-      <strong>Asignatura:</strong> Aplicaciones de la Inteligencia Artificial<br>
-      <strong>Estudiantes:</strong> Royber Zayas (911670) y Alexandra Parra (914953)<br>
-      <strong>Docente:</strong> Jhon Freddy Linares</p>
-    </div>
-  </aside>
+<section>
+<div class="panel">
+<div class="hud">
+<div class="stat"><small>Puntaje</small><strong id="score">0</strong></div>
+<div class="stat"><small>Tiempo</small><strong id="time">60</strong></div>
+<div class="stat"><small>Velocidad</small><strong id="speed">1.0x</strong></div>
+<div class="stat"><small>Récord</small><strong id="best">0</strong></div>
+</div>
+<canvas id="game" width="720" height="480"></canvas>
+<button id="start">Iniciar partida</button>
+<button id="cameraBtn">Activar cámara</button>
+<p>Estado: <span id="status">Presiona “Iniciar partida”.</span></p>
+<video id="camera" playsinline></video>
+</div>
+<div class="panel">
+<h2>📊 Informe de desempeño</h2>
+<div id="report" class="report">Completa una partida para generar el informe.</div>
+</div>
+</section>
+<aside>
+<div class="panel">
+<h2>¿Cómo jugar?</h2>
+<p class="note">Permite el acceso a la cámara y mueve el dedo índice para conducir. Recoge monedas y evita las rocas. La dificultad aumenta con el tiempo.</p>
+<hr><h3>🏆 Récord personal</h3>
+<div class="record" id="recordText">0 puntos</div>
+<p class="note">El récord se conserva en este navegador con localStorage.</p>
+</div>
+<div class="panel">
+<h3>Indicadores del juego</h3>
+<p class="note">El informe describe puntaje, monedas, colisiones y duración. No es una evaluación psicológica clínica ni permite emitir diagnósticos.</p>
+<hr><h3>Créditos académicos</h3>
+<p class="note"><strong>Programa:</strong> Ingeniería de Sistemas<br>
+<strong>Asignatura:</strong> Aplicaciones de la Inteligencia Artificial<br>
+<strong>Estudiantes:</strong> Royber Zayas (911670) y Alexandra Parra (914953)<br>
+<strong>Docente:</strong> Jhon Freddy Linares</p>
+</div>
+</aside>
 </main>
-
 <footer>Proyecto académico · Seguimiento de manos con MediaPipe</footer>
-
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
 const video=document.getElementById("camera");
-const scoreEl=document.getElementById("score");
-const timeEl=document.getElementById("time");
-const speedEl=document.getElementById("speed");
-const bestEl=document.getElementById("best");
-const recordText=document.getElementById("recordText");
-const statusEl=document.getElementById("status");
-const reportEl=document.getElementById("report");
-
+const $=id=>document.getElementById(id);
 const RECORD_KEY="finger_racer_best_score";
-let score=0,timeLeft=60,running=false,handX=.5;
-let lastTime=0,elapsed=0,spawnElapsed=0,roadOffset=0;
+let score=0,timeLeft=60,elapsed=0,running=false,handX=.5;
+let lastTime=0,spawnElapsed=0,roadOffset=0;
 let objects=[],particles=[],hands=null,camera=null;
-let coinsCollected=0,collisions=0,gameEndedByCollision=false;
+let coinsCollected=0,collisions=0;
 const car={x:360,y:390,w:42,h:62};
 
-function getBest(){
-  try{return Number(localStorage.getItem(RECORD_KEY))||0;}
-  catch(e){return 0;}
-}
-function showBest(){
-  const best=getBest();
-  bestEl.textContent=best;
-  recordText.textContent=best+" puntos";
-}
-function saveRecord(){
-  if(score>getBest()){
-    try{localStorage.setItem(RECORD_KEY,String(score));}
-    catch(e){console.warn("No se pudo guardar el récord.",e);}
-  }
-  showBest();
-}
+function getBest(){try{return Number(localStorage.getItem(RECORD_KEY))||0}catch(e){return 0}}
+function showBest(){$("best").textContent=getBest();$("recordText").textContent=getBest()+" puntos"}
+function saveRecord(){if(score>getBest()){try{localStorage.setItem(RECORD_KEY,String(score))}catch(e){console.warn(e)}}showBest()}
 function updateHUD(){
-  scoreEl.textContent=score;
-  timeEl.textContent=Math.max(0,Math.ceil(timeLeft));
-  speedEl.textContent=(1+elapsed/35).toFixed(1)+"x";
+ $("score").textContent=score;
+ $("time").textContent=Math.ceil(Math.max(0,timeLeft));
+ $("speed").textContent=(1+elapsed*.025).toFixed(1)+"x";
 }
 function resetGame(){
-  score=0;timeLeft=60;elapsed=0;spawnElapsed=0;
-  objects=[];particles=[];coinsCollected=0;collisions=0;
-  gameEndedByCollision=false;
-  car.x=canvas.width/2;
-  reportEl.textContent="La partida está en curso. El informe aparecerá al finalizar.";
-  updateHUD();
+ score=0;timeLeft=60;elapsed=0;spawnElapsed=0;roadOffset=0;
+ objects=[];particles=[];coinsCollected=0;collisions=0;car.x=360;
+ $("report").textContent="La partida está en curso. El informe aparecerá al finalizar.";
+ updateHUD();
 }
 function startGame(){
-  resetGame();
-  running=true;
-  lastTime=performance.now();
-  statusEl.textContent="¡En marcha! Mueve tu dedo índice.";
-}
-function makeReport(){
-  const survived=Math.min(60,Math.max(0,elapsed));
-  const efficiency=survived>0?Math.round(coinsCollected/(survived/60)):0;
-  let result;
-  if(score>=100) result="Puntaje alto en esta partida.";
-  else if(score>=40) result="Puntaje intermedio en esta partida.";
-  else result="Puntaje bajo en esta partida.";
-  reportEl.innerHTML=`
-    <h3>Resultado de la partida</h3>
-    <div class="metric"><span>Puntaje final</span><strong>${score}</strong></div>
-    <div class="metric"><span>Monedas recogidas</span><strong>${coinsCollected}</strong></div>
-    <div class="metric"><span>Colisiones con rocas</span><strong>${collisions}</strong></div>
-    <div class="metric"><span>Tiempo jugado</span><strong>${survived.toFixed(1)} s</strong></div>
-    <div class="metric"><span>Monedas por minuto jugado</span><strong>${efficiency}</strong></div>
-    <p><strong>Resumen:</strong> ${result}</p>
-    <p>El resultado describe el desempeño en esta sesión; no representa una valoración clínica ni una medida validada de atención o personalidad.</p>`;
+ resetGame();running=true;lastTime=performance.now();
+ $("status").textContent="¡En marcha! Mueve el dedo índice.";
 }
 function endGame(reason){
-  if(!running)return;
-  running=false;
-  if(reason==="collision")gameEndedByCollision=true;
-  saveRecord();
-  makeReport();
-  statusEl.textContent=reason==="collision"
-    ?"Partida finalizada por colisión. Puntaje: "+score
-    :"Tiempo terminado. Puntaje: "+score;
+ if(!running)return;
+ running=false;saveRecord();
+ const rate=elapsed>0?(coinsCollected/(elapsed/60)).toFixed(1):"0";
+ $("report").innerHTML=`<h3>Resultado de la partida</h3>
+ <div class="metric"><span>Puntaje final</span><strong>${score}</strong></div>
+ <div class="metric"><span>Monedas recogidas</span><strong>${coinsCollected}</strong></div>
+ <div class="metric"><span>Colisiones con rocas</span><strong>${collisions}</strong></div>
+ <div class="metric"><span>Tiempo jugado</span><strong>${elapsed.toFixed(1)} s</strong></div>
+ <div class="metric"><span>Monedas por minuto</span><strong>${rate}</strong></div>
+ <p>${score>=100?"Puntaje alto":score>=40?"Puntaje intermedio":"Puntaje bajo"} en esta partida.</p>
+ <p>Este resumen describe el desempeño dentro del videojuego; no constituye una evaluación psicológica validada.</p>`;
+ $("status").textContent=(reason==="collision"?"Partida finalizada por colisión. ":"Tiempo terminado. ")+"Puntaje: "+score;
 }
 function spawnObject(){
-  const type=Math.random()<.35?"coin":"rock";
-  objects.push({
-    x:95+Math.random()*(canvas.width-190),
-    y:-30,r:type==="coin"?13:19,type
-  });
+ const type=Math.random()<.35?"coin":"rock";
+ objects.push({x:95+Math.random()*(canvas.width-190),y:-30,
+ r:type==="coin"?13:19,type});
 }
 function addParticles(x,y,color){
-  for(let i=0;i<8;i++){
-    particles.push({x,y,vx:(Math.random()-.5)*150,vy:(Math.random()-.8)*150,life:.5,color});
-  }
+ for(let i=0;i<8;i++)particles.push({x,y,vx:(Math.random()-.5)*150,vy:(Math.random()-.8)*150,life:.5,color});
 }
 function update(dt){
-  if(!running)return;
-  elapsed+=dt;
-  timeLeft-=dt;
-  if(timeLeft<=0){timeLeft=0;updateHUD();endGame("time");return;}
+ if(!running)return;
+ elapsed+=dt;
+ timeLeft=Math.max(0,timeLeft-dt);
+ if(timeLeft<=0){updateHUD();endGame("time");return}
+ const left=75,right=canvas.width-75;
+ const target=left+handX*(right-left);
+ car.x+=(target-car.x)*Math.min(1,dt*7);
+ car.x=Math.max(left+car.w/2,Math.min(right-car.w/2,car.x));
 
-  const roadLeft=75,roadRight=canvas.width-75;
-  const targetX=roadLeft+handX*(roadRight-roadLeft);
-  car.x+=(targetX-car.x)*Math.min(1,dt*7);
-  car.x=Math.max(roadLeft+car.w/2,Math.min(roadRight-car.w/2,car.x));
+ // La velocidad y la frecuencia de aparición aumentan progresivamente.
+ const speed=190+Math.min(elapsed*7,300);
+ roadOffset=(roadOffset+speed*dt)%60;
+ spawnElapsed+=dt;
+ const spawnRate=Math.max(.28,.9-elapsed*.009);
+ if(spawnElapsed>=spawnRate){spawnElapsed=0;spawnObject()}
 
-  roadOffset=(roadOffset+(190+elapsed*3)*dt)%60;
-  spawnElapsed+=dt;
-  const spawnRate=Math.max(.38,.9-elapsed*.008);
-  if(spawnElapsed>=spawnRate){spawnElapsed=0;spawnObject();}
-
-  for(let i=objects.length-1;i>=0;i--){
-    const o=objects[i];
-    o.y+=(190+elapsed*3)*dt;
-    const hit=Math.abs(o.x-car.x)<o.r+car.w*.38&&
-      Math.abs(o.y-car.y)<o.r+car.h*.4;
-    if(hit){
-      if(o.type==="coin"){
-        score+=10;coinsCollected++;
-        addParticles(o.x,o.y,"#ffd166");
-        objects.splice(i,1);
-      }else{
-        collisions++;
-        endGame("collision");
-        return;
-      }
-    }else if(o.y>canvas.height+30){
-      objects.splice(i,1);
-    }
-  }
-  particles=particles.filter(p=>p.life>0);
-  particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;});
-  updateHUD();
+ for(let i=objects.length-1;i>=0;i--){
+  const o=objects[i];o.y+=speed*dt;
+  const hit=Math.abs(o.x-car.x)<o.r+car.w*.38&&Math.abs(o.y-car.y)<o.r+car.h*.4;
+  if(hit){
+   if(o.type==="coin"){score+=10;coinsCollected++;addParticles(o.x,o.y,"#ffd166");objects.splice(i,1)}
+   else{collisions++;endGame("collision");return}
+  }else if(o.y>canvas.height+30)objects.splice(i,1);
+ }
+ particles=particles.filter(p=>p.life>0);
+ particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt});
+ updateHUD();
 }
 function drawCar(){
-  ctx.fillStyle="#e74c3c";
-  ctx.fillRect(car.x-car.w/2,car.y-car.h/2,car.w,car.h);
-  ctx.fillStyle="#b8e7ff";
-  ctx.fillRect(car.x-car.w/2+7,car.y-car.h/2+8,car.w-14,16);
-  ctx.fillStyle="#222";
-  ctx.fillRect(car.x-car.w/2-4,car.y-car.h/2+8,5,16);
-  ctx.fillRect(car.x+car.w/2-1,car.y-car.h/2+8,5,16);
-  ctx.fillRect(car.x-car.w/2-4,car.y+car.h/2-22,5,16);
-  ctx.fillRect(car.x+car.w/2-1,car.y+car.h/2-22,5,16);
+ ctx.fillStyle="#e74c3c";ctx.fillRect(car.x-21,car.y-31,42,62);
+ ctx.fillStyle="#b8e7ff";ctx.fillRect(car.x-14,car.y-23,28,16);
+ ctx.fillStyle="#222";
+ ctx.fillRect(car.x-25,car.y-23,5,16);ctx.fillRect(car.x+20,car.y-23,5,16);
+ ctx.fillRect(car.x-25,car.y+9,5,16);ctx.fillRect(car.x+20,car.y+9,5,16);
 }
 function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle="#263548";ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle="#172536";ctx.fillRect(65,0,canvas.width-130,canvas.height);
-  ctx.strokeStyle="#d8e2ed";ctx.lineWidth=4;ctx.setLineDash([24,20]);
-  ctx.lineDashOffset=-roadOffset;
-  ctx.beginPath();ctx.moveTo(canvas.width/2,0);ctx.lineTo(canvas.width/2,canvas.height);ctx.stroke();
-  ctx.setLineDash([]);
-  objects.forEach(o=>{
-    ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
-    ctx.fillStyle=o.type==="coin"?"#ffd166":"#9aa4b2";ctx.fill();
-    ctx.strokeStyle=o.type==="coin"?"#fff0a6":"#667080";ctx.lineWidth=3;ctx.stroke();
-    if(o.type==="coin"){ctx.fillStyle="#765500";ctx.font="bold 15px Arial";ctx.textAlign="center";ctx.fillText("$",o.x,o.y+5);}
-  });
-  particles.forEach(p=>{
-    ctx.globalAlpha=Math.max(0,p.life*2);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,5,5);
-  });
-  ctx.globalAlpha=1;drawCar();
-  if(!running){
-    ctx.fillStyle="rgba(0,0,0,.48)";ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 27px Arial";
-    ctx.fillText("FINGER RACER",canvas.width/2,canvas.height/2-10);
-    ctx.font="17px Arial";ctx.fillText("Pulsa Iniciar partida para jugar",canvas.width/2,canvas.height/2+25);
-  }
+ ctx.clearRect(0,0,720,480);ctx.fillStyle="#263548";ctx.fillRect(0,0,720,480);
+ ctx.fillStyle="#172536";ctx.fillRect(65,0,590,480);
+ ctx.strokeStyle="#d8e2ed";ctx.lineWidth=4;ctx.setLineDash([24,20]);ctx.lineDashOffset=-roadOffset;
+ ctx.beginPath();ctx.moveTo(360,0);ctx.lineTo(360,480);ctx.stroke();ctx.setLineDash([]);
+ objects.forEach(o=>{
+  ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
+  ctx.fillStyle=o.type==="coin"?"#ffd166":"#9aa4b2";ctx.fill();
+  ctx.strokeStyle=o.type==="coin"?"#fff0a6":"#667080";ctx.lineWidth=3;ctx.stroke();
+  if(o.type==="coin"){ctx.fillStyle="#765500";ctx.font="bold 15px Arial";ctx.textAlign="center";ctx.fillText("$",o.x,o.y+5)}
+ });
+ particles.forEach(p=>{ctx.globalAlpha=Math.max(0,p.life*2);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,5,5)});
+ ctx.globalAlpha=1;drawCar();
+ if(!running){
+  ctx.fillStyle="rgba(0,0,0,.48)";ctx.fillRect(0,0,720,480);
+  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 27px Arial";
+  ctx.fillText("FINGER RACER",360,230);ctx.font="17px Arial";
+  ctx.fillText("Pulsa Iniciar partida para jugar",360,265);
+ }
 }
 function loop(now){
-  const dt=Math.min((now-lastTime)/1000||0,.04);
-  lastTime=now;update(dt);draw();requestAnimationFrame(loop);
+ const dt=Math.min(Math.max(0,(now-lastTime)/1000),.04);lastTime=now;
+ update(dt);draw();requestAnimationFrame(loop);
 }
-document.getElementById("start").addEventListener("click",startGame);
-
+$("start").addEventListener("click",startGame);
 async function setupCamera(){
-  try{
-    if(!window.Hands||!window.Camera)throw new Error("No se cargaron las librerías de MediaPipe.");
-    if(!hands){
-      hands=new Hands({locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-      hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.6,minTrackingConfidence:.6});
-      hands.onResults(results=>{
-        if(results.multiHandLandmarks&&results.multiHandLandmarks.length){
-          handX=1-results.multiHandLandmarks[0][8].x;
-          statusEl.textContent=running?"Mano detectada. ¡Conduce!":"Mano detectada. Inicia la partida.";
-        }
-      });
+ try{
+  if(!window.Hands||!window.Camera)throw new Error("No se cargaron las librerías de MediaPipe.");
+  if(!hands){
+   hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+   hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.6,minTrackingConfidence:.6});
+   hands.onResults(r=>{
+    if(r.multiHandLandmarks&&r.multiHandLandmarks.length){
+     handX=1-r.multiHandLandmarks[0][8].x;
+     $("status").textContent=running?"Mano detectada. ¡Conduce!":"Mano detectada. Inicia la partida.";
     }
-    if(camera)return;
-    camera=new Camera(video,{onFrame:async()=>{await hands.send({image:video});},width:640,height:480});
-    await camera.start();
-    statusEl.textContent="Cámara activada. Muestra tu mano.";
-  }catch(e){statusEl.textContent="No se pudo activar la cámara: "+e.message;}
+   });
+  }
+  if(camera)return;
+  camera=new Camera(video,{onFrame:async()=>{await hands.send({image:video})},width:640,height:480});
+  await camera.start();$("status").textContent="Cámara activada. Muestra tu mano.";
+ }catch(e){$("status").textContent="No se pudo activar la cámara: "+e.message}
 }
-document.getElementById("cameraBtn").addEventListener("click",setupCamera);
-showBest();
-requestAnimationFrame(loop);
+$("cameraBtn").addEventListener("click",setupCamera);
+showBest();updateHUD();requestAnimationFrame(loop);
 </script>
 </body>
 </html>

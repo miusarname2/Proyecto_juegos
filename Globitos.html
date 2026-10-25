@@ -3,329 +3,249 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Balloon Pop | UCC</title>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#101827;color:#f5f7fa}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#101827;color:#f5f7fa}
 header{text-align:center;padding:20px;background:#172538;border-bottom:3px solid #20c997}
-h1{margin:0;color:#20c997}
-header p{margin:8px 0 0;color:#d5deea}
+h1{margin:0;color:#20c997}header p{color:#d5deea}
 main{max-width:1150px;margin:auto;padding:18px;display:grid;grid-template-columns:2fr 1fr;gap:18px}
 .panel{background:#1b293b;border-radius:14px;padding:16px;margin-bottom:16px}
 canvas{width:100%;display:block;background:#192c43;border-radius:10px}
 .hud{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 .stat{background:#101827;padding:10px;border-radius:8px;text-align:center}
-.stat small{display:block;color:#9fb1c7;margin-bottom:5px}
-.stat strong{font-size:20px;color:#20c997}
+.stat small{display:block;color:#9fb1c7;margin-bottom:5px}.stat strong{font-size:20px;color:#20c997}
 button{border:0;border-radius:8px;padding:12px 18px;background:#20c997;color:#10212a;font-weight:bold;cursor:pointer;margin:8px 4px 0 0}
-button:hover{filter:brightness(1.1)}
-#status{color:#ffd166;font-weight:bold}
-#camera{display:none}
-.note{color:#bdcad9;line-height:1.5;font-size:14px}
-.record{font-size:28px;font-weight:bold;color:#ffd166}
-.report{background:#101827;border-left:4px solid #20c997;border-radius:8px;padding:12px;margin-top:10px;line-height:1.5}
-.report h3{margin-top:0;color:#20c997}
-.metric{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #344358;padding:7px 0}
-.metric:last-child{border-bottom:0}
+#status{color:#ffd166;font-weight:bold}#camera{display:none}
+.note{color:#bdcad9;line-height:1.5;font-size:14px}.record{font-size:28px;color:#ffd166;font-weight:bold}
+.report{background:#101827;border-left:4px solid #20c997;border-radius:8px;padding:12px;line-height:1.5}
+.metric{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #344358}
 footer{text-align:center;padding:16px;color:#9fb1c7;font-size:13px}
 @media(max-width:760px){main{grid-template-columns:1fr}.hud{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <header>
-  <h1>🎈 BALLOON POP</h1>
-  <p>Universidad Cooperativa de Colombia · Ingeniería de Sistemas · 6.º semestre</p>
+<h1>🎈 BALLOON POP</h1>
+<p>Universidad Cooperativa de Colombia · Ingeniería de Sistemas · 6.º semestre</p>
 </header>
-
 <main>
-  <section>
-    <div class="panel">
-      <div class="hud">
-        <div class="stat"><small>Puntaje</small><strong id="score">0</strong></div>
-        <div class="stat"><small>Tiempo</small><strong id="time">90</strong></div>
-        <div class="stat"><small>Color objetivo</small><strong id="target">Rojo</strong></div>
-        <div class="stat"><small>Récord</small><strong id="best">0</strong></div>
-      </div>
-      <canvas id="game" width="720" height="480"></canvas>
-      <button id="start">Iniciar partida</button>
-      <button id="cameraBtn">Activar cámara</button>
-      <p>Estado: <span id="status">Presiona “Iniciar partida”.</span></p>
-      <video id="camera" playsinline></video>
-    </div>
-
-    <div class="panel">
-      <h2>📊 Informe de desempeño</h2>
-      <p class="note">El resumen utiliza los resultados registrados durante la partida. No es una prueba psicológica clínica ni una herramienta diagnóstica.</p>
-      <div id="report" class="report">Completa una partida para generar el informe.</div>
-    </div>
-  </section>
-
-  <aside>
-    <div class="panel">
-      <h2>¿Cómo jugar?</h2>
-      <p class="note">1. Activa la cámara y permite el acceso.<br>
-      2. Muestra tu mano frente a la cámara.<br>
-      3. Usa la punta del dedo índice para tocar los globos.<br>
-      4. Busca el color objetivo indicado en pantalla.</p>
-      <p class="note">Acierto: +10 puntos. Globo de otro color: −3 puntos, sin bajar de cero.</p>
-      <hr>
-      <h3>🏆 Récord personal</h3>
-      <div class="record" id="recordText">0 puntos</div>
-      <p class="note">El récord se guarda en este navegador mediante <code>localStorage</code>.</p>
-    </div>
-
-    <div class="panel">
-      <h3>🧠 Alcance de los indicadores</h3>
-      <p class="note">Se contabilizan aciertos, errores, precisión de respuesta y duración. Los resultados reflejan el desempeño dentro del juego; no determinan la atención, inteligencia, personalidad ni estado psicológico de la persona.</p>
-      <hr>
-      <h3>Créditos académicos</h3>
-      <p class="note"><strong>Programa:</strong> Ingeniería de Sistemas<br>
-      <strong>Asignatura:</strong> Aplicaciones de la Inteligencia Artificial<br>
-      <strong>Estudiantes:</strong> Royber Zayas (911670) y Alexandra Parra (914953)<br>
-      <strong>Docente:</strong> Jhon Freddy Linares</p>
-    </div>
-  </aside>
+<section>
+<div class="panel">
+<div class="hud">
+<div class="stat"><small>Puntaje</small><strong id="score">0</strong></div>
+<div class="stat"><small>Tiempo</small><strong id="time">90</strong></div>
+<div class="stat"><small>Color objetivo</small><strong id="target">Rojo</strong></div>
+<div class="stat"><small>Récord</small><strong id="best">0</strong></div>
+</div>
+<canvas id="game" width="720" height="480"></canvas>
+<button id="start">Iniciar partida</button>
+<button id="cameraBtn">Activar cámara</button>
+<p>Estado: <span id="status">Presiona “Iniciar partida”.</span></p>
+<video id="camera" playsinline></video>
+</div>
+<div class="panel">
+<h2>📊 Informe de desempeño</h2>
+<div id="report" class="report">Completa una partida para generar el informe.</div>
+</div>
+</section>
+<aside>
+<div class="panel">
+<h2>¿Cómo jugar?</h2>
+<p class="note">Activa la cámara y usa la punta del dedo índice para tocar los globos. Busca el color objetivo indicado en pantalla. Acierto: +10 puntos; error: −3 puntos, sin bajar de cero.</p>
+<hr><h3>🏆 Récord personal</h3>
+<div class="record" id="recordText">0 puntos</div>
+<p class="note">El récord se guarda en este navegador con localStorage.</p>
+</div>
+<div class="panel">
+<h3>Indicadores del juego</h3>
+<p class="note">Se registran aciertos, errores, precisión y duración. Son indicadores descriptivos del juego, no una evaluación psicológica clínica ni una herramienta diagnóstica.</p>
+<hr><h3>Créditos académicos</h3>
+<p class="note"><strong>Programa:</strong> Ingeniería de Sistemas<br>
+<strong>Asignatura:</strong> Aplicaciones de la Inteligencia Artificial<br>
+<strong>Estudiantes:</strong> Royber Zayas (911670) y Alexandra Parra (914953)<br>
+<strong>Docente:</strong> Jhon Freddy Linares</p>
+</div>
+</aside>
 </main>
-
 <footer>Proyecto académico · Seguimiento de manos con MediaPipe</footer>
-
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
 const video=document.getElementById("camera");
-const scoreEl=document.getElementById("score");
-const timeEl=document.getElementById("time");
-const targetEl=document.getElementById("target");
-const bestEl=document.getElementById("best");
-const recordText=document.getElementById("recordText");
-const statusEl=document.getElementById("status");
-const reportEl=document.getElementById("report");
-
+const $=id=>document.getElementById(id);
 const RECORD_KEY="balloon_pop_best_score";
 const colors=[
-  {name:"Rojo",value:"#ff5252"},
-  {name:"Azul",value:"#42a5f5"},
-  {name:"Verde",value:"#4cd964"},
-  {name:"Amarillo",value:"#ffd740"},
-  {name:"Morado",value:"#ba68c8"}
+ {name:"Rojo",value:"#ff5252"},
+ {name:"Azul",value:"#42a5f5"},
+ {name:"Verde",value:"#4cd964"},
+ {name:"Amarillo",value:"#ffd740"},
+ {name:"Morado",value:"#ba68c8"}
 ];
-
-let score=0,timeLeft=90,running=false,hand=null;
-let hands=null,camera=null,lastTime=0,elapsed=0,spawnElapsed=0;
+let score=0,timeLeft=90,elapsed=0,running=false,hand=null;
+let hands=null,camera=null,lastTime=0,spawnElapsed=0;
 let balloons=[],particles=[],targetColor=0,balloonId=0;
 let correctHits=0,wrongHits=0;
 
-function getBest(){
-  try{return Number(localStorage.getItem(RECORD_KEY))||0;}
-  catch(e){return 0;}
-}
-function showBest(){
-  const best=getBest();
-  bestEl.textContent=best;
-  recordText.textContent=best+" puntos";
-}
-function saveRecord(){
-  if(score>getBest()){
-    try{localStorage.setItem(RECORD_KEY,String(score));}
-    catch(e){console.warn("No se pudo guardar el récord.",e);}
-  }
-  showBest();
-}
+function getBest(){try{return Number(localStorage.getItem(RECORD_KEY))||0}catch(e){return 0}}
+function showBest(){$("best").textContent=getBest();$("recordText").textContent=getBest()+" puntos"}
+function saveRecord(){if(score>getBest()){try{localStorage.setItem(RECORD_KEY,String(score))}catch(e){console.warn(e)}}showBest()}
 function updateHUD(){
-  scoreEl.textContent=score;
-  timeEl.textContent=Math.max(0,Math.ceil(timeLeft));
-  targetEl.textContent=colors[targetColor].name;
-  targetEl.style.color=colors[targetColor].value;
+ $("score").textContent=score;
+ $("time").textContent=Math.ceil(Math.max(0,timeLeft));
+ $("target").textContent=colors[targetColor].name;
+ $("target").style.color=colors[targetColor].value;
 }
 function resetGame(){
-  score=0;timeLeft=90;elapsed=0;spawnElapsed=0;
-  balloons=[];particles=[];balloonId=0;
-  correctHits=0;wrongHits=0;
-  targetColor=Math.floor(Math.random()*colors.length);
-  reportEl.textContent="La partida está en curso. El informe aparecerá al finalizar.";
-  updateHUD();
+ score=0;timeLeft=90;elapsed=0;spawnElapsed=0;
+ balloons=[];particles=[];balloonId=0;correctHits=0;wrongHits=0;
+ targetColor=Math.floor(Math.random()*colors.length);
+ $("report").textContent="La partida está en curso. El informe aparecerá al finalizar.";
+ updateHUD();
 }
 function startGame(){
-  resetGame();
-  running=true;
-  lastTime=performance.now();
-  statusEl.textContent="¡A jugar! Revienta los globos del color indicado.";
-}
-function makeReport(){
-  const total=correctHits+wrongHits;
-  const accuracy=total>0?Math.round(correctHits/total*100):0;
-  let result;
-  if(total===0)result="No se registraron globos tocados durante esta partida.";
-  else if(accuracy>=80)result="Se obtuvo una proporción alta de aciertos en esta sesión.";
-  else if(accuracy>=50)result="Se obtuvo una proporción intermedia de aciertos en esta sesión.";
-  else result="Se obtuvo una proporción baja de aciertos en esta sesión.";
-
-  reportEl.innerHTML=`
-    <h3>Resultado de la partida</h3>
-    <div class="metric"><span>Puntaje final</span><strong>${score}</strong></div>
-    <div class="metric"><span>Globos correctos</span><strong>${correctHits}</strong></div>
-    <div class="metric"><span>Globos incorrectos</span><strong>${wrongHits}</strong></div>
-    <div class="metric"><span>Precisión de la tarea</span><strong>${accuracy}%</strong></div>
-    <div class="metric"><span>Tiempo jugado</span><strong>${Math.min(90,Math.max(0,elapsed)).toFixed(1)} s</strong></div>
-    <p><strong>Resumen:</strong> ${result}</p>
-    <p>La precisión se calcula dividiendo los aciertos entre el total de globos tocados. Es un indicador descriptivo del juego, no una medida clínica validada.</p>`;
+ resetGame();running=true;lastTime=performance.now();
+ $("status").textContent="¡A jugar! Toca los globos del color indicado.";
 }
 function endGame(){
-  if(!running)return;
-  running=false;
-  saveRecord();
-  makeReport();
-  statusEl.textContent="Partida finalizada. Puntaje: "+score;
+ if(!running)return;
+ running=false;saveRecord();
+ const total=correctHits+wrongHits;
+ const accuracy=total?Math.round(correctHits/total*100):0;
+ let summary=total===0?"No se registraron globos tocados."
+  :accuracy>=80?"Proporción alta de aciertos en esta sesión."
+  :accuracy>=50?"Proporción intermedia de aciertos en esta sesión."
+  :"Proporción baja de aciertos en esta sesión.";
+ $("report").innerHTML=`<h3>Resultado de la partida</h3>
+ <div class="metric"><span>Puntaje final</span><strong>${score}</strong></div>
+ <div class="metric"><span>Globos correctos</span><strong>${correctHits}</strong></div>
+ <div class="metric"><span>Globos incorrectos</span><strong>${wrongHits}</strong></div>
+ <div class="metric"><span>Precisión de la tarea</span><strong>${accuracy}%</strong></div>
+ <div class="metric"><span>Tiempo jugado</span><strong>${elapsed.toFixed(1)} s</strong></div>
+ <p>${summary}</p>
+ <p>La precisión corresponde a aciertos divididos por el total de globos tocados. No es una medida clínica validada.</p>`;
+ $("status").textContent="Partida finalizada. Puntaje: "+score;
 }
 function spawnBalloon(){
-  const color=Math.floor(Math.random()*colors.length);
-  const r=23+Math.random()*9;
-  balloons.push({
-    id:balloonId++,
-    x:35+r+Math.random()*(canvas.width-70-r*2),
-    y:canvas.height+35,r,color,
-    speed:35+Math.random()*35,
-    wobble:Math.random()*Math.PI*2,
-    popped:false
-  });
+ const r=23+Math.random()*9;
+ balloons.push({
+  id:balloonId++,x:35+r+Math.random()*(canvas.width-70-r*2),
+  y:canvas.height+35,r,color:Math.floor(Math.random()*colors.length),
+  speed:35+Math.random()*35,wobble:Math.random()*Math.PI*2
+ });
 }
 function burst(x,y,color){
-  for(let i=0;i<12;i++){
-    const angle=Math.random()*Math.PI*2;
-    const speed=35+Math.random()*100;
-    particles.push({
-      x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
-      life:.65,color
-    });
-  }
+ for(let i=0;i<12;i++){
+  const a=Math.random()*Math.PI*2,s=35+Math.random()*100;
+  particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.65,color});
+ }
 }
 function popBalloon(b){
-  if(b.popped||!running)return;
-  b.popped=true;
-  if(b.color===targetColor){
-    score+=10;correctHits++;
-    statusEl.textContent="¡Correcto! +10 puntos";
-    burst(b.x,b.y,colors[b.color].value);
-  }else{
-    score=Math.max(0,score-3);wrongHits++;
-    statusEl.textContent="Color incorrecto: −3 puntos";
-    burst(b.x,b.y,"#d5deea");
-  }
-  balloons=balloons.filter(item=>!item.popped);
-  targetColor=Math.floor(Math.random()*colors.length);
-  updateHUD();
+ if(!running)return;
+ const index=balloons.indexOf(b);
+ if(index<0)return;
+ balloons.splice(index,1);
+ if(b.color===targetColor){
+  score+=10;correctHits++;$("status").textContent="¡Correcto! +10 puntos";
+  burst(b.x,b.y,colors[b.color].value);
+ }else{
+  score=Math.max(0,score-3);wrongHits++;$("status").textContent="Color incorrecto: −3 puntos";
+  burst(b.x,b.y,"#d5deea");
+ }
+ targetColor=Math.floor(Math.random()*colors.length);
+ updateHUD();
 }
 function update(dt){
-  if(!running)return;
-  elapsed+=dt;
-  timeLeft-=dt;
-  if(timeLeft<=0){timeLeft=0;updateHUD();endGame();return;}
+ if(!running)return;
+ elapsed+=dt;timeLeft=Math.max(0,timeLeft-dt);
+ if(timeLeft<=0){updateHUD();endGame();return}
 
-  spawnElapsed+=dt;
-  if(spawnElapsed>=.48){spawnElapsed=0;spawnBalloon();}
-  balloons.forEach(b=>{
-    b.y-=b.speed*dt;
-    b.wobble+=dt*2.2;
-    b.x+=Math.sin(b.wobble)*12*dt;
-  });
-  balloons=balloons.filter(b=>b.y>-50);
-  particles=particles.filter(p=>p.life>0);
-  particles.forEach(p=>{
-    p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=100*dt;p.life-=dt;
-  });
+ // Los globos aparecen más seguido y ascienden más rápido con el tiempo.
+ const spawnRate=Math.max(.22,.48-elapsed*.0025);
+ spawnElapsed+=dt;
+ if(spawnElapsed>=spawnRate){spawnElapsed=0;spawnBalloon()}
+ const speedMultiplier=1+Math.min(elapsed*.012,1.5);
+ balloons.forEach(b=>{
+  b.y-=(b.speed*speedMultiplier)*dt;
+  b.wobble+=dt*2.2;
+  b.x+=Math.sin(b.wobble)*12*dt;
+ });
+ balloons=balloons.filter(b=>b.y>-50);
+ particles=particles.filter(p=>p.life>0);
+ particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=100*dt;p.life-=dt});
 
-  if(hand){
-    const px=hand.x*canvas.width,py=hand.y*canvas.height;
-    for(let i=balloons.length-1;i>=0;i--){
-      const b=balloons[i];
-      if(Math.hypot(px-b.x,py-b.y)<b.r+12){
-        popBalloon(b);
-        break;
-      }
-    }
+ if(hand){
+  const px=hand.x*canvas.width,py=hand.y*canvas.height;
+  for(let i=balloons.length-1;i>=0;i--){
+   const b=balloons[i];
+   if(Math.hypot(px-b.x,py-b.y)<b.r+12){popBalloon(b);break}
   }
-  updateHUD();
+ }
+ updateHUD();
 }
 function drawBalloon(b){
-  const color=colors[b.color].value;
-  ctx.beginPath();ctx.ellipse(b.x,b.y,b.r*.83,b.r,0,0,Math.PI*2);
-  ctx.fillStyle=color;ctx.fill();
-  ctx.strokeStyle="rgba(255,255,255,.65)";ctx.lineWidth=2;ctx.stroke();
-  ctx.beginPath();ctx.ellipse(b.x-b.r*.25,b.y-b.r*.35,4,7,-.4,0,Math.PI*2);
-  ctx.fillStyle="rgba(255,255,255,.65)";ctx.fill();
-  ctx.beginPath();ctx.moveTo(b.x,b.y+b.r*.95);
-  ctx.lineTo(b.x-4,b.y+b.r+7);ctx.lineTo(b.x+4,b.y+b.r+7);ctx.closePath();
-  ctx.fillStyle=color;ctx.fill();
-  ctx.beginPath();ctx.moveTo(b.x,b.y+b.r+7);ctx.lineTo(b.x+2,b.y+b.r+20);
-  ctx.strokeStyle="#d5deea";ctx.lineWidth=1.5;ctx.stroke();
+ const color=colors[b.color].value;
+ ctx.beginPath();ctx.ellipse(b.x,b.y,b.r*.83,b.r,0,0,Math.PI*2);
+ ctx.fillStyle=color;ctx.fill();ctx.strokeStyle="rgba(255,255,255,.65)";ctx.lineWidth=2;ctx.stroke();
+ ctx.beginPath();ctx.ellipse(b.x-b.r*.25,b.y-b.r*.35,4,7,-.4,0,Math.PI*2);
+ ctx.fillStyle="rgba(255,255,255,.65)";ctx.fill();
+ ctx.beginPath();ctx.moveTo(b.x,b.y+b.r*.95);ctx.lineTo(b.x-4,b.y+b.r+7);
+ ctx.lineTo(b.x+4,b.y+b.r+7);ctx.closePath();ctx.fillStyle=color;ctx.fill();
+ ctx.beginPath();ctx.moveTo(b.x,b.y+b.r+7);ctx.lineTo(b.x+2,b.y+b.r+20);
+ ctx.strokeStyle="#d5deea";ctx.lineWidth=1.5;ctx.stroke();
 }
 function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const bg=ctx.createLinearGradient(0,0,0,canvas.height);
-  bg.addColorStop(0,"#192c43");bg.addColorStop(1,"#314d6b");
-  ctx.fillStyle=bg;ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle="rgba(255,255,255,.06)";
-  for(let i=0;i<9;i++){
-    ctx.beginPath();ctx.arc((i*97+40)%canvas.width,(i*61+30)%canvas.height,3,0,Math.PI*2);ctx.fill();
-  }
-  balloons.forEach(drawBalloon);
-  particles.forEach(p=>{
-    ctx.globalAlpha=Math.max(0,p.life/.65);
-    ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();
-  });
-  ctx.globalAlpha=1;
-  if(hand){
-    const px=hand.x*canvas.width,py=hand.y*canvas.height;
-    ctx.beginPath();ctx.arc(px,py,10,0,Math.PI*2);
-    ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.stroke();
-  }
-  if(!running){
-    ctx.fillStyle="rgba(0,0,0,.48)";ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 27px Arial";
-    ctx.fillText("BALLOON POP",canvas.width/2,canvas.height/2-10);
-    ctx.font="17px Arial";ctx.fillText("Pulsa Iniciar partida para jugar",canvas.width/2,canvas.height/2+25);
-  }
+ ctx.clearRect(0,0,720,480);
+ const bg=ctx.createLinearGradient(0,0,0,480);
+ bg.addColorStop(0,"#192c43");bg.addColorStop(1,"#314d6b");
+ ctx.fillStyle=bg;ctx.fillRect(0,0,720,480);
+ ctx.fillStyle="rgba(255,255,255,.06)";
+ for(let i=0;i<9;i++){
+  ctx.beginPath();ctx.arc((i*97+40)%720,(i*61+30)%480,3,0,Math.PI*2);ctx.fill();
+ }
+ balloons.forEach(drawBalloon);
+ particles.forEach(p=>{
+  ctx.globalAlpha=Math.max(0,p.life/.65);ctx.fillStyle=p.color;
+  ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();
+ });
+ ctx.globalAlpha=1;
+ if(hand){
+  ctx.beginPath();ctx.arc(hand.x*720,hand.y*480,10,0,Math.PI*2);
+  ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.stroke();
+ }
+ if(!running){
+  ctx.fillStyle="rgba(0,0,0,.48)";ctx.fillRect(0,0,720,480);
+  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 27px Arial";
+  ctx.fillText("BALLOON POP",360,230);ctx.font="17px Arial";
+  ctx.fillText("Pulsa Iniciar partida para jugar",360,265);
+ }
 }
 function loop(now){
-  const dt=Math.min((now-lastTime)/1000||0,.04);
-  lastTime=now;update(dt);draw();requestAnimationFrame(loop);
+ const dt=Math.min(Math.max(0,(now-lastTime)/1000),.04);lastTime=now;
+ update(dt);draw();requestAnimationFrame(loop);
 }
-document.getElementById("start").addEventListener("click",startGame);
-
+$("start").addEventListener("click",startGame);
 async function setupCamera(){
-  try{
-    if(!window.Hands||!window.Camera)throw new Error("No se cargaron las librerías de MediaPipe.");
-    if(!hands){
-      hands=new Hands({locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-      hands.setOptions({
-        maxNumHands:1,modelComplexity:1,
-        minDetectionConfidence:.6,minTrackingConfidence:.6
-      });
-      hands.onResults(results=>{
-        if(results.multiHandLandmarks&&results.multiHandLandmarks.length){
-          const tip=results.multiHandLandmarks[0][8];
-          hand={x:1-tip.x,y:tip.y};
-          if(!running)statusEl.textContent="Mano detectada. Inicia la partida.";
-        }else{
-          hand=null;
-        }
-      });
-    }
-    if(camera)return;
-    camera=new Camera(video,{
-      onFrame:async()=>{await hands.send({image:video});},
-      width:640,height:480
-    });
-    await camera.start();
-    statusEl.textContent="Cámara activada. Coloca tu mano frente a ella.";
-  }catch(e){statusEl.textContent="No se pudo activar la cámara: "+e.message;}
+ try{
+  if(!window.Hands||!window.Camera)throw new Error("No se cargaron las librerías de MediaPipe.");
+  if(!hands){
+   hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+   hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.6,minTrackingConfidence:.6});
+   hands.onResults(r=>{
+    if(r.multiHandLandmarks&&r.multiHandLandmarks.length){
+     const tip=r.multiHandLandmarks[0][8];hand={x:1-tip.x,y:tip.y};
+     if(!running)$("status").textContent="Mano detectada. Inicia la partida.";
+    }else hand=null;
+   });
+  }
+  if(camera)return;
+  camera=new Camera(video,{onFrame:async()=>{await hands.send({image:video})},width:640,height:480});
+  await camera.start();$("status").textContent="Cámara activada. Coloca tu mano frente a ella.";
+ }catch(e){$("status").textContent="No se pudo activar la cámara: "+e.message}
 }
-document.getElementById("cameraBtn").addEventListener("click",setupCamera);
-showBest();
-requestAnimationFrame(loop);
+$("cameraBtn").addEventListener("click",setupCamera);
+showBest();updateHUD();requestAnimationFrame(loop);
 </script>
 </body>
 </html>
