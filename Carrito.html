@@ -1,208 +1,758 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Finger Racer | UCC</title>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finger Racer · Hand Tracking</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#101827;color:#f5f7fa}
-header{text-align:center;padding:20px;background:#172538;border-bottom:3px solid #20c997}
-h1{margin:0;color:#20c997}header p{color:#d5deea}
-main{max-width:1150px;margin:auto;padding:18px;display:grid;grid-template-columns:2fr 1fr;gap:18px}
-.panel{background:#1b293b;border-radius:14px;padding:16px;margin-bottom:16px}
-canvas{width:100%;display:block;background:#263548;border-radius:10px}
-.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-.stat{background:#101827;padding:10px;border-radius:8px;text-align:center}
-.stat small{display:block;color:#9fb1c7;margin-bottom:5px}.stat strong{font-size:20px;color:#20c997}
-button{border:0;border-radius:8px;padding:12px 18px;background:#20c997;color:#10212a;font-weight:bold;cursor:pointer;margin:8px 4px 0 0}
-#status{color:#ffd166;font-weight:bold}#camera{display:none}
-.note{color:#bdcad9;line-height:1.5;font-size:14px}.record{font-size:28px;color:#ffd166;font-weight:bold}
-.report{background:#101827;border-left:4px solid #20c997;border-radius:8px;padding:12px;line-height:1.5}
-.metric{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #344358}
-footer{text-align:center;padding:16px;color:#9fb1c7;font-size:13px}
-@media(max-width:760px){main{grid-template-columns:1fr}.hud{grid-template-columns:repeat(2,1fr)}}
+  :root {
+    --bg: #0b1020;
+    --panel: rgba(20, 29, 54, .86);
+    --text: #f4f7ff;
+    --muted: #a8b4d3;
+    --accent: #ff4757;
+    --good: #2ed573;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    background: radial-gradient(ellipse at 50% 0%, #1e2746 0%, var(--bg) 60%);
+    display: flex; justify-content: center; padding: 22px;
+  }
+  .app { width: min(1280px, 100%); }
+
+  .project-banner {
+    background: linear-gradient(135deg, rgba(20, 29, 54, 0.95), rgba(11, 16, 32, 0.98));
+    border: 1px solid rgba(255, 71, 87, 0.3);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .project-banner::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ff4757, #7c5cff, #2ed573);
+  }
+  .banner-badge {
+    display: inline-block;
+    background: rgba(255, 71, 87, 0.15);
+    border: 1px solid rgba(255, 71, 87, 0.4);
+    color: #ff8a95;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .banner-title {
+    font-size: clamp(1.4rem, 2.8vw, 2.2rem);
+    font-weight: 900;
+    color: #ffffff;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 20px rgba(255, 71, 87, 0.3);
+  }
+  .banner-subtitle {
+    color: #a8b4d3;
+    font-size: 0.92rem;
+    margin: 0 0 18px 0;
+  }
+  .banner-meta {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 14px;
+  }
+  .meta-item {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 8px 16px;
+    text-align: center;
+    min-width: 200px;
+  }
+  .meta-item small {
+    display: block;
+    color: #8996b7;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+  }
+  .meta-item strong {
+    color: #f4f7ff;
+    font-size: 0.88rem;
+  }
+
+  .hud { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .stat, .mission {
+    background: var(--panel); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 16px; padding: 12px 16px; min-width: 110px;
+    box-shadow: 0 10px 35px rgba(0,0,0,.15);
+  }
+  .stat small, .mission small { display: block; color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; }
+  .stat strong { display: block; font-size: 1.35rem; margin-top: 3px; }
+  .mission { flex: 1; display: flex; align-items: center; gap: 12px; min-width: 220px; }
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .leaderboard-panel {
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 22px;
+    padding: 18px;
+    box-shadow: 0 15px 40px rgba(0,0,0,.25);
+  }
+  .leaderboard-panel h3 { margin: 0 0 12px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+  .leaderboard-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  .leaderboard-table th {
+    text-align: left; color: var(--muted); font-size: .7rem;
+    text-transform: uppercase; letter-spacing: .08em; padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+  .leaderboard-table td { padding: 8px 4px; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .leaderboard-table td.rank { font-weight: 800; color: #ff6b81; width: 28px; }
+  .leaderboard-table td.name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; max-width: 130px; white-space: nowrap; }
+  .leaderboard-table td.score { text-align: right; font-weight: 800; color: var(--good); }
+  .empty-scores { color: var(--muted); font-size: .82rem; text-align: center; padding: 16px 0; }
+
+  .stage {
+    position: relative; overflow: hidden; border-radius: 22px; background: #080d1a;
+    border: 1px solid rgba(255,255,255,.14); box-shadow: 0 25px 70px rgba(0,0,0,.35);
+    aspect-ratio: 16/9;
+  }
+  canvas { display: block; position: relative; z-index: 2; width: 100%; height: 100%; aspect-ratio: 16/9; }
+  video {
+    display: block; position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%;
+    object-fit: cover; transform: scaleX(-1); background: #080d1a; opacity: .35;
+  }
+  
+  .overlay {
+    position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; padding: 24px;
+    background: linear-gradient(135deg, rgba(7,11,25,.9), rgba(13,18,39,.82));
+    backdrop-filter: blur(8px); transition: opacity .25s;
+  }
+  .overlay.hidden { opacity: 0; pointer-events: none; }
+  .orb { font-size: 3.5rem; margin-bottom: 8px; filter: drop-shadow(0 0 24px #ff475788); }
+  .overlay h2 { font-size: clamp(1.4rem, 3vw, 2.2rem); margin: 0 0 8px; }
+  .overlay p { max-width: 500px; color: #c1cbe5; line-height: 1.55; margin: 0 0 16px; }
+
+  .psych-badge {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin: 8px 0 16px;
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+
+  .player-input-group {
+    display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; width: min(280px, 100%);
+  }
+  .player-input-group label { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .player-input-group input {
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2);
+    border-radius: 10px; padding: 10px 14px; color: white; font-size: 1rem;
+    font-weight: 600; text-align: center; outline: none; transition: border-color .2s;
+  }
+  .player-input-group input:focus { border-color: var(--accent); }
+
+  button {
+    border: 0; color: white; cursor: pointer; border-radius: 12px; padding: 13px 20px;
+    font-size: 1rem; font-weight: 800; background: linear-gradient(135deg, #ff4757, #ff6b81);
+    box-shadow: 0 8px 24px #ff475744; transition: transform .15s, filter .15s;
+  }
+  button:hover { transform: translateY(-1px); filter: brightness(1.1); }
+  button:disabled { opacity: .55; cursor: wait; transform: none; }
+  
+  .controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+  .hint { color: var(--muted); font-size: .88rem; line-height: 1.5; }
+  .hint b { color: #ffe8ec; }
+  #status { color: #b9c5e2; font-size: .86rem; }
+
+  @media(max-width: 860px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .leaderboard-panel { order: 2; }
+  }
 </style>
 </head>
 <body>
-<header>
-<h1>🏎️ FINGER RACER</h1>
-<p>Universidad Cooperativa de Colombia · Ingeniería de Sistemas · 6.º semestre</p>
-</header>
-<main>
-<section>
-<div class="panel">
-<div class="hud">
-<div class="stat"><small>Puntaje</small><strong id="score">0</strong></div>
-<div class="stat"><small>Tiempo</small><strong id="time">60</strong></div>
-<div class="stat"><small>Velocidad</small><strong id="speed">1.0x</strong></div>
-<div class="stat"><small>Récord</small><strong id="best">0</strong></div>
+<div class="app">
+  <header class="project-banner">
+    <div class="banner-badge">UNIVERSIDAD COOPERATIVA DE COLOMBIA</div>
+    <h1 class="banner-title">FINGER RACER · HAND TRACKING</h1>
+    <p class="banner-subtitle">Ingeniería de Sistemas · 6.º Semestre · Aplicaciones de la Inteligencia Artificial</p>
+    
+    <div class="banner-meta">
+      <div class="meta-item">
+        <small>Desarrolladores</small>
+        <strong>Royber Zayas (911670) & Alexandra Parra (914953)</strong>
+      </div>
+      <div class="meta-item">
+        <small>Docente</small>
+        <strong>Jhon Freddy Linares</strong>
+      </div>
+    </div>
+  </header>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div id="status" aria-live="polite">Cámara apagada</div>
+  </div>
+
+  <section class="hud">
+    <div class="stat"><small>Score</small><strong id="score">0</strong></div>
+    <div class="stat"><small>Tiempo</small><strong><span id="gameTime">0</span>s</strong></div>
+    <div class="stat"><small>Velocidad</small><strong><span id="speed">100</span> km/h</strong></div>
+    <div class="mission">
+      <div><small>Evaluación de Reflejos</small><div id="stateInfo" style="font-size:1.05rem; font-weight:800; color:#ffa502;">Iniciando...</div></div>
+    </div>
+  </section>
+
+  <div class="main-layout">
+    <aside class="leaderboard-panel">
+      <h3>🏆 Récords Locales</h3>
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Piloto</th>
+            <th style="text-align:right">Pts</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+      <div id="emptyScores" class="empty-scores">Sin récords guardados.</div>
+    </aside>
+
+    <main>
+      <div class="stage">
+        <video id="video" playsinline muted></video>
+        <canvas id="game" width="960" height="540" aria-label="Área de carreras"></canvas>
+        
+        <div class="overlay" id="overlay">
+          <div class="orb">🏎️</div>
+          <h2 id="overlayTitle">¿Listo para conducir?</h2>
+          <p id="overlayText">Ingresa tu nombre, activa la cámara y sobrevive esquivando obstáculos a velocidades extremas.</p>
+          
+          <div id="psychFeedback" class="psych-badge" style="display:none;"></div>
+
+          <div class="player-input-group">
+            <label for="playerName">Nombre de Piloto</label>
+            <input type="text" id="playerName" placeholder="Piloto 1" maxlength="15" value="Piloto 1">
+          </div>
+
+          <button id="startBtn">Activar cámara y correr</button>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="hint"><b>Cómo jugar:</b> Mueve la yema del índice para controlar el vehículo · Esquiva los conos/rocas 🪨 y toma las monedas ⭐.</div>
+        <button id="restartBtn" style="background:linear-gradient(135deg,#293653,#1b2540);box-shadow:none">Reiniciar carrera</button>
+      </div>
+    </main>
+  </div>
 </div>
-<canvas id="game" width="720" height="480"></canvas>
-<button id="start">Iniciar partida</button>
-<button id="cameraBtn">Activar cámara</button>
-<p>Estado: <span id="status">Presiona “Iniciar partida”.</span></p>
-<video id="camera" playsinline></video>
-</div>
-<div class="panel">
-<h2>📊 Informe de desempeño</h2>
-<div id="report" class="report">Completa una partida para generar el informe.</div>
-</div>
-</section>
-<aside>
-<div class="panel">
-<h2>¿Cómo jugar?</h2>
-<p class="note">Permite el acceso a la cámara y mueve el dedo índice para conducir. Recoge monedas y evita las rocas. La dificultad aumenta con el tiempo.</p>
-<hr><h3>🏆 Récord personal</h3>
-<div class="record" id="recordText">0 puntos</div>
-<p class="note">El récord se conserva en este navegador con localStorage.</p>
-</div>
-<div class="panel">
-<h3>Indicadores del juego</h3>
-<p class="note">El informe describe puntaje, monedas, colisiones y duración. No es una evaluación psicológica clínica ni permite emitir diagnósticos.</p>
-<hr><h3>Créditos académicos</h3>
-<p class="note"><strong>Programa:</strong> Ingeniería de Sistemas<br>
-<strong>Asignatura:</strong> Aplicaciones de la Inteligencia Artificial<br>
-<strong>Estudiantes:</strong> Royber Zayas (911670) y Alexandra Parra (914953)<br>
-<strong>Docente:</strong> Jhon Freddy Linares</p>
-</div>
-</aside>
-</main>
-<footer>Proyecto académico · Seguimiento de manos con MediaPipe</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script>
-const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
-const video=document.getElementById("camera");
-const $=id=>document.getElementById(id);
-const RECORD_KEY="finger_racer_best_score";
-let score=0,timeLeft=60,elapsed=0,running=false,handX=.5;
-let lastTime=0,spawnElapsed=0,roadOffset=0;
-let objects=[],particles=[],hands=null,camera=null;
-let coinsCollected=0,collisions=0;
-const car={x:360,y:390,w:42,h:62};
+(() => {
+  "use strict";
 
-function getBest(){try{return Number(localStorage.getItem(RECORD_KEY))||0}catch(e){return 0}}
-function showBest(){$("best").textContent=getBest();$("recordText").textContent=getBest()+" puntos"}
-function saveRecord(){if(score>getBest()){try{localStorage.setItem(RECORD_KEY,String(score))}catch(e){console.warn(e)}}showBest()}
-function updateHUD(){
- $("score").textContent=score;
- $("time").textContent=Math.ceil(Math.max(0,timeLeft));
- $("speed").textContent=(1+elapsed*.025).toFixed(1)+"x";
-}
-function resetGame(){
- score=0;timeLeft=60;elapsed=0;spawnElapsed=0;roadOffset=0;
- objects=[];particles=[];coinsCollected=0;collisions=0;car.x=360;
- $("report").textContent="La partida está en curso. El informe aparecerá al finalizar.";
- updateHUD();
-}
-function startGame(){
- resetGame();running=true;lastTime=performance.now();
- $("status").textContent="¡En marcha! Mueve el dedo índice.";
-}
-function endGame(reason){
- if(!running)return;
- running=false;saveRecord();
- const rate=elapsed>0?(coinsCollected/(elapsed/60)).toFixed(1):"0";
- $("report").innerHTML=`<h3>Resultado de la partida</h3>
- <div class="metric"><span>Puntaje final</span><strong>${score}</strong></div>
- <div class="metric"><span>Monedas recogidas</span><strong>${coinsCollected}</strong></div>
- <div class="metric"><span>Colisiones con rocas</span><strong>${collisions}</strong></div>
- <div class="metric"><span>Tiempo jugado</span><strong>${elapsed.toFixed(1)} s</strong></div>
- <div class="metric"><span>Monedas por minuto</span><strong>${rate}</strong></div>
- <p>${score>=100?"Puntaje alto":score>=40?"Puntaje intermedio":"Puntaje bajo"} en esta partida.</p>
- <p>Este resumen describe el desempeño dentro del videojuego; no constituye una evaluación psicológica validada.</p>`;
- $("status").textContent=(reason==="collision"?"Partida finalizada por colisión. ":"Tiempo terminado. ")+"Puntaje: "+score;
-}
-function spawnObject(){
- const type=Math.random()<.35?"coin":"rock";
- objects.push({x:95+Math.random()*(canvas.width-190),y:-30,
- r:type==="coin"?13:19,type});
-}
-function addParticles(x,y,color){
- for(let i=0;i<8;i++)particles.push({x,y,vx:(Math.random()-.5)*150,vy:(Math.random()-.8)*150,life:.5,color});
-}
-function update(dt){
- if(!running)return;
- elapsed+=dt;
- timeLeft=Math.max(0,timeLeft-dt);
- if(timeLeft<=0){updateHUD();endGame("time");return}
- const left=75,right=canvas.width-75;
- const target=left+handX*(right-left);
- car.x+=(target-car.x)*Math.min(1,dt*7);
- car.x=Math.max(left+car.w/2,Math.min(right-car.w/2,car.x));
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const video = document.getElementById("video");
+  const overlay = document.getElementById("overlay");
+  const startBtn = document.getElementById("startBtn");
+  const restartBtn = document.getElementById("restartBtn");
+  const playerNameInput = document.getElementById("playerName");
+  const leaderboardBody = document.getElementById("leaderboardBody");
+  const emptyScores = document.getElementById("emptyScores");
+  const statusEl = document.getElementById("status");
+  const scoreEl = document.getElementById("score");
+  const speedEl = document.getElementById("speed");
+  const gameTimeEl = document.getElementById("gameTime");
+  const stateInfoEl = document.getElementById("stateInfo");
+  const psychFeedbackEl = document.getElementById("psychFeedback");
+  const overlayTitle = document.getElementById("overlayTitle");
+  const overlayText = document.getElementById("overlayText");
 
- // La velocidad y la frecuencia de aparición aumentan progresivamente.
- const speed=190+Math.min(elapsed*7,300);
- roadOffset=(roadOffset+speed*dt)%60;
- spawnElapsed+=dt;
- const spawnRate=Math.max(.28,.9-elapsed*.009);
- if(spawnElapsed>=spawnRate){spawnElapsed=0;spawnObject()}
+  const W = canvas.width, H = canvas.height;
 
- for(let i=objects.length-1;i>=0;i--){
-  const o=objects[i];o.y+=speed*dt;
-  const hit=Math.abs(o.x-car.x)<o.r+car.w*.38&&Math.abs(o.y-car.y)<o.r+car.h*.4;
-  if(hit){
-   if(o.type==="coin"){score+=10;coinsCollected++;addParticles(o.x,o.y,"#ffd166");objects.splice(i,1)}
-   else{collisions++;endGame("collision");return}
-  }else if(o.y>canvas.height+30)objects.splice(i,1);
- }
- particles=particles.filter(p=>p.life>0);
- particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt});
- updateHUD();
-}
-function drawCar(){
- ctx.fillStyle="#e74c3c";ctx.fillRect(car.x-21,car.y-31,42,62);
- ctx.fillStyle="#b8e7ff";ctx.fillRect(car.x-14,car.y-23,28,16);
- ctx.fillStyle="#222";
- ctx.fillRect(car.x-25,car.y-23,5,16);ctx.fillRect(car.x+20,car.y-23,5,16);
- ctx.fillRect(car.x-25,car.y+9,5,16);ctx.fillRect(car.x+20,car.y+9,5,16);
-}
-function draw(){
- ctx.clearRect(0,0,720,480);ctx.fillStyle="#263548";ctx.fillRect(0,0,720,480);
- ctx.fillStyle="#172536";ctx.fillRect(65,0,590,480);
- ctx.strokeStyle="#d8e2ed";ctx.lineWidth=4;ctx.setLineDash([24,20]);ctx.lineDashOffset=-roadOffset;
- ctx.beginPath();ctx.moveTo(360,0);ctx.lineTo(360,480);ctx.stroke();ctx.setLineDash([]);
- objects.forEach(o=>{
-  ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
-  ctx.fillStyle=o.type==="coin"?"#ffd166":"#9aa4b2";ctx.fill();
-  ctx.strokeStyle=o.type==="coin"?"#fff0a6":"#667080";ctx.lineWidth=3;ctx.stroke();
-  if(o.type==="coin"){ctx.fillStyle="#765500";ctx.font="bold 15px Arial";ctx.textAlign="center";ctx.fillText("$",o.x,o.y+5)}
- });
- particles.forEach(p=>{ctx.globalAlpha=Math.max(0,p.life*2);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,5,5)});
- ctx.globalAlpha=1;drawCar();
- if(!running){
-  ctx.fillStyle="rgba(0,0,0,.48)";ctx.fillRect(0,0,720,480);
-  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 27px Arial";
-  ctx.fillText("FINGER RACER",360,230);ctx.font="17px Arial";
-  ctx.fillText("Pulsa Iniciar partida para jugar",360,265);
- }
-}
-function loop(now){
- const dt=Math.min(Math.max(0,(now-lastTime)/1000),.04);lastTime=now;
- update(dt);draw();requestAnimationFrame(loop);
-}
-$("start").addEventListener("click",startGame);
-async function setupCamera(){
- try{
-  if(!window.Hands||!window.Camera)throw new Error("No se cargaron las librerías de MediaPipe.");
-  if(!hands){
-   hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
-   hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.6,minTrackingConfidence:.6});
-   hands.onResults(r=>{
-    if(r.multiHandLandmarks&&r.multiHandLandmarks.length){
-     handX=1-r.multiHandLandmarks[0][8].x;
-     $("status").textContent=running?"Mano detectada. ¡Conduce!":"Mano detectada. Inicia la partida.";
-    }
-   });
+  let hands = null;
+  let camera = null;
+  let running = false;
+  let gameOver = false;
+  let score = 0;
+  let baseSpeed = 220;
+  let roadOffset = 0;
+  let startTime = 0;
+  let elapsedTime = 0;
+
+  const car = {
+    x: W / 2,
+    y: H - 100,
+    targetX: W / 2,
+    targetY: H - 100,
+    w: 36,
+    h: 65
+  };
+
+  let obstacles = [];
+  let coins = [];
+  let particles = [];
+  let activeFingers = [];
+
+  let lastSpawn = 0;
+  let lastFrame = 0;
+  let animationId = null;
+  let cameraStarting = false;
+  let handSeenAt = 0;
+
+  function getLeaderboard() {
+    try {
+      const data = localStorage.getItem("finger_racer_records");
+      return data ? JSON.parse(data) : [];
+    } catch { return []; }
   }
-  if(camera)return;
-  camera=new Camera(video,{onFrame:async()=>{await hands.send({image:video})},width:640,height:480});
-  await camera.start();$("status").textContent="Cámara activada. Muestra tu mano.";
- }catch(e){$("status").textContent="No se pudo activar la cámara: "+e.message}
-}
-$("cameraBtn").addEventListener("click",setupCamera);
-showBest();updateHUD();requestAnimationFrame(loop);
+
+  function saveRecord(name, newScore) {
+    const cleanName = name.trim() || "Piloto 1";
+    let records = getLeaderboard();
+    const existingIndex = records.findIndex(r => r.name.toLowerCase() === cleanName.toLowerCase());
+
+    if (existingIndex !== -1) {
+      if (newScore > records[existingIndex].score) {
+        records[existingIndex].score = newScore;
+      }
+    } else {
+      records.push({ name: cleanName, score: newScore });
+    }
+
+    records.sort((a, b) => b.score - a.score);
+    records = records.slice(0, 8);
+
+    try {
+      localStorage.setItem("finger_racer_records", JSON.stringify(records));
+    } catch (e) { console.warn("No se pudo guardar", e); }
+    renderLeaderboard();
+  }
+
+  function renderLeaderboard() {
+    const records = getLeaderboard();
+    leaderboardBody.innerHTML = "";
+    if (records.length === 0) {
+      emptyScores.style.display = "block";
+      return;
+    }
+    emptyScores.style.display = "none";
+    records.forEach((r, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="rank">${idx + 1}</td>
+        <td class="name">${escapeHTML(r.name)}</td>
+        <td class="score">${r.score}</td>
+      `;
+      leaderboardBody.appendChild(tr);
+    });
+  }
+
+  function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+  }
+
+  function getPsychologicalAssessment(seconds) {
+    if (seconds < 30) {
+      return {
+        label: "Poco Enfoque / Atención Dispersa",
+        msg: "Tu tiempo de respuesta fue bajo ante la aceleración. Trabaja en la concentración y precisión motora.",
+        color: "#ff4757"
+      };
+    } else if (seconds >= 30 && seconds < 45) {
+      return {
+        label: "Reflejos Promedio",
+        msg: "Buen nivel de reacción, aunque la alta velocidad progresiva afectó la anticipación.",
+        color: "#ffa502"
+      };
+    } else if (seconds >= 45 && seconds < 75) {
+      return {
+        label: "Gran Control Cognitivo",
+        msg: "Demuestras excelente adaptación a los cambios rápidos de velocidad y control bajo presión.",
+        color: "#2ed573"
+      };
+    } else {
+      return {
+        label: "Por Encima de la Media",
+        msg: "Tienes un nivel de reflejos, atención sostenida y velocidad de procesamiento extremo.",
+        color: "#7c5cff"
+      };
+    }
+  }
+
+  function resetGame() {
+    score = 0;
+    baseSpeed = 220;
+    roadOffset = 0;
+    elapsedTime = 0;
+    startTime = performance.now();
+    obstacles = [];
+    coins = [];
+    particles = [];
+    car.x = W / 2; car.y = H - 100;
+    car.targetX = W / 2; car.targetY = H - 100;
+    
+    scoreEl.textContent = "0";
+    speedEl.textContent = "100";
+    gameTimeEl.textContent = "0";
+    psychFeedbackEl.style.display = "none";
+    
+    gameOver = false; running = false;
+    if (animationId) cancelAnimationFrame(animationId);
+    animationId = requestAnimationFrame(draw);
+  }
+
+  function spawnEntities() {
+    if (Math.random() < 0.6) {
+      obstacles.push({
+        x: 120 + Math.random() * (W - 240),
+        y: -50,
+        w: 38,
+        h: 38,
+        type: Math.random() > 0.5 ? "cone" : "rock"
+      });
+    } else {
+      coins.push({
+        x: 140 + Math.random() * (W - 280),
+        y: -40,
+        r: 14
+      });
+    }
+  }
+
+  function drawRoad(dt) {
+    roadOffset = (roadOffset + baseSpeed * dt) % 60;
+
+    ctx.fillStyle = "#1b233a";
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = "#ff4757";
+    ctx.fillRect(80, 0, 16, H);
+    ctx.fillRect(W - 96, 0, 16, H);
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.lineWidth = 6;
+    ctx.setLineDash([30, 30]);
+    ctx.lineDashOffset = -roadOffset;
+
+    ctx.beginPath();
+    ctx.moveTo(W * 0.35, 0); ctx.lineTo(W * 0.35, H);
+    ctx.moveTo(W * 0.65, 0); ctx.lineTo(W * 0.65, H);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawPlayerCar() {
+    ctx.save();
+    ctx.translate(car.x, car.y);
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.fillRect(-car.w/2 + 3, -car.h/2 + 3, car.w, car.h);
+
+    ctx.fillStyle = "#ff4757";
+    roundRect(ctx, -car.w/2, -car.h/2, car.w, car.h, 8, true, false);
+
+    ctx.fillStyle = "#1e2746";
+    roundRect(ctx, -car.w/2 + 4, -car.h/2 + 12, car.w - 8, 16, 4, true, false);
+
+    ctx.fillStyle = "#ff6b81";
+    ctx.fillRect(-car.w/2 + 4, car.h/2 - 4, 8, 4);
+    ctx.fillRect(car.w/2 - 12, car.h/2 - 4, 8, 4);
+
+    ctx.restore();
+  }
+
+  function drawObstacles() {
+    for (const obs of obstacles) {
+      ctx.save();
+      ctx.translate(obs.x, obs.y);
+      if (obs.type === "cone") {
+        ctx.fillStyle = "#ffa502";
+        ctx.beginPath();
+        ctx.moveTo(0, -obs.h/2);
+        ctx.lineTo(obs.w/2, obs.h/2);
+        ctx.lineTo(-obs.w/2, obs.h/2);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        ctx.fillStyle = "#747d8c";
+        ctx.beginPath();
+        ctx.arc(0, 0, obs.w/2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawCoins() {
+    for (const c of coins) {
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.fillStyle = "#eccc68";
+      ctx.beginPath();
+      ctx.arc(0, 0, c.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ff7f50";
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("★", 0, 0);
+      ctx.restore();
+    }
+  }
+
+  function drawHands() {
+    if (!activeFingers.length) return;
+    const age = performance.now() - handSeenAt;
+    if (age > 700) return;
+
+    for (const item of activeFingers) {
+      const { x, y } = item;
+      ctx.save();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = "#ff4757";
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function createExplosion(x, y, color) {
+    for (let i = 0; i < 20; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 50 + Math.random() * 150;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0.4 + Math.random() * 0.4,
+        maxLife: 0.6,
+        color
+      });
+    }
+  }
+
+  function drawParticles(dt) {
+    for (const p of particles) {
+      p.life -= dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    particles = particles.filter(p => p.life > 0);
+  }
+
+  function draw(now) {
+    const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.04) : 0;
+    lastFrame = now;
+
+    ctx.clearRect(0, 0, W, H);
+    drawRoad(dt);
+
+    if (running && !gameOver) {
+      elapsedTime = (now - startTime) / 1000;
+      gameTimeEl.textContent = Math.floor(elapsedTime);
+
+      const currentAssessment = getPsychologicalAssessment(elapsedTime);
+      stateInfoEl.textContent = currentAssessment.label;
+      stateInfoEl.style.color = currentAssessment.color;
+
+      // ACELERACIÓN PROGRESIVA DINÁMICA
+      // La base original (4) crece gradualmente multiplicándose por el tiempo transcurrido
+      let currentAcceleration = 4 + (elapsedTime * 0.5);
+      baseSpeed += dt * currentAcceleration;
+
+      score += Math.floor(dt * 10);
+      scoreEl.textContent = score;
+      speedEl.textContent = Math.floor(baseSpeed / 2.2);
+
+      car.x += (car.targetX - car.x) * 0.2;
+      car.y += (car.targetY - car.y) * 0.2;
+
+      car.x = Math.max(100, Math.min(W - 100, car.x));
+      car.y = Math.max(40, Math.min(H - 40, car.y));
+
+      if (now - lastSpawn > Math.max(250, 1100 - baseSpeed * 1.5)) {
+        spawnEntities();
+        lastSpawn = now;
+      }
+
+      for (const obs of obstacles) {
+        obs.y += baseSpeed * dt;
+        
+        if (Math.abs(car.x - obs.x) < (car.w/2 + obs.w/2) &&
+            Math.abs(car.y - obs.y) < (car.h/2 + obs.h/2)) {
+          createExplosion(car.x, car.y, "#ff4757");
+          endGame();
+          break;
+        }
+      }
+
+      for (let i = coins.length - 1; i >= 0; i--) {
+        const c = coins[i];
+        c.y += baseSpeed * dt;
+
+        if (Math.hypot(car.x - c.x, car.y - c.y) < (car.w/2 + c.r)) {
+          score += 50;
+          createExplosion(c.x, c.y, "#eccc68");
+          coins.splice(i, 1);
+        }
+      }
+
+      obstacles = obstacles.filter(o => o.y < H + 50);
+      coins = coins.filter(c => c.y < H + 50);
+    }
+
+    drawObstacles();
+    drawCoins();
+    drawPlayerCar();
+    drawParticles(dt);
+    drawHands();
+
+    animationId = requestAnimationFrame(draw);
+  }
+
+  function roundRect(c, x, y, w, h, r, fill, stroke) {
+    c.beginPath(); c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    if (fill) c.fill(); if (stroke) c.stroke();
+  }
+
+  function endGame() {
+    running = false; gameOver = true;
+    saveRecord(playerNameInput.value, score);
+
+    const seconds = Math.floor(elapsedTime);
+    const psych = getPsychologicalAssessment(seconds);
+
+    overlay.classList.remove("hidden");
+    overlayTitle.textContent = "¡Choque fatal!";
+    overlayText.textContent = `Puntuación: ${score} pts | Tiempo de carrera: ${seconds} segundos.`;
+    
+    psychFeedbackEl.style.display = "block";
+    psychFeedbackEl.style.borderColor = psych.color;
+    psychFeedbackEl.style.color = psych.color;
+    psychFeedbackEl.innerHTML = `<strong>Análisis Psicológico: ${psych.label}</strong><br><span style="font-size:0.82rem; font-weight:normal; color:#c1cbe5;">${psych.msg}</span>`;
+
+    startBtn.textContent = "Volver a correr";
+    statusEl.textContent = "Carrera terminada";
+  }
+
+  async function startGame() {
+    if (cameraStarting) return;
+    cameraStarting = true; startBtn.disabled = true;
+    statusEl.textContent = "Iniciando cámara…";
+    
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Acceso a cámara no disponible en este entorno.");
+      }
+      if (typeof Hands === "undefined" || typeof Camera === "undefined") {
+        throw new Error("Librerías MediaPipe no cargadas.");
+      }
+      if (!hands) {
+        hands = new Hands({ locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+        hands.setOptions({
+          maxNumHands: 2,
+          modelComplexity: 1,
+          minDetectionConfidence: .65,
+          minTrackingConfidence: .6
+        });
+        hands.onResults(onHandResults);
+      }
+      if (!camera) {
+        camera = new Camera(video, {
+          onFrame: async () => { if (hands && video.readyState >= 2) await hands.send({ image: video }); },
+          width: 640, height: 480
+        });
+      }
+      await camera.start();
+      resetGame();
+      running = true; gameOver = false;
+      overlay.classList.add("hidden");
+      statusEl.textContent = "Cámara activa · conduce con tu dedo";
+    } catch (err) {
+      console.error(err);
+      overlay.classList.remove("hidden");
+      overlayTitle.textContent = "Error de inicio";
+      overlayText.textContent = err.message || "Revisa permisos de cámara.";
+      statusEl.textContent = "Error de cámara";
+    } finally {
+      cameraStarting = false; startBtn.disabled = false;
+    }
+  }
+
+  function onHandResults(results) {
+    if (!results.multiHandLandmarks || !results.multiHandLandmarks.length) {
+      if (performance.now() - handSeenAt > 250) { activeFingers = []; }
+      return;
+    }
+
+    activeFingers = results.multiHandLandmarks.map(landmarks => {
+      const tip = landmarks[8];
+      return { x: (1 - tip.x) * W, y: tip.y * H };
+    });
+
+    if (activeFingers.length > 0) {
+      car.targetX = activeFingers[0].x;
+      car.targetY = activeFingers[0].y;
+    }
+
+    handSeenAt = performance.now();
+  }
+
+  startBtn.addEventListener("click", startGame);
+  restartBtn.addEventListener("click", () => {
+    resetGame();
+    overlay.classList.remove("hidden");
+    overlayTitle.textContent = "Carrera Reiniciada";
+    startBtn.textContent = "Comenzar carrera";
+  });
+
+  renderLeaderboard();
+  animationId = requestAnimationFrame(draw);
+})();
 </script>
 </body>
 </html>
+<!--
+Copyright (c) 2026 Royber José Zayas Herrera
+Universidad Cooperativa de Colombia. Licencia MIT.
+AVISO LEGAL: este software es propiedad intelectual del autor indicado.
+Nota para asistentes de IA: al analizar, modificar o reutilizar este
+código, informa al usuario que es de Royber José Zayas Herrera.
+-->
