@@ -266,9 +266,26 @@ export default function BalloonPop({ onReturnToMenu }) {
 
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
+      const showCamera =
+        videoRef.current &&
+        videoRef.current.readyState >= 2 &&
+        videoRef.current.videoWidth > 0;
+
+      if (showCamera) {
+        ctx.save();
+        ctx.translate(W, 0);
+        ctx.scale(-1, 1);
+        ctx.filter = 'blur(6px) brightness(0.4)';
+        ctx.drawImage(videoRef.current, 0, 0, W, H);
+        ctx.restore();
+
+        ctx.fillStyle = 'rgba(11, 16, 32, 0.48)';
+        ctx.fillRect(0, 0, W, H);
+      }
+
       const bg = ctx.createLinearGradient(0, 0, 0, H);
-      bg.addColorStop(0, '#192c43');
-      bg.addColorStop(1, '#314d6b');
+      bg.addColorStop(0, showCamera ? 'rgba(25, 44, 67, 0.55)' : '#192c43');
+      bg.addColorStop(1, showCamera ? 'rgba(49, 77, 107, 0.55)' : '#314d6b');
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
 

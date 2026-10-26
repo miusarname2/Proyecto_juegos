@@ -231,10 +231,10 @@ export default function FingerRacer({ onReturnToMenu }) {
           locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
         });
         s.hands.setOptions({
-          maxNumHands: 2,
-          modelComplexity: 1,
-          minDetectionConfidence: 0.65,
-          minTrackingConfidence: 0.6,
+          maxNumHands: 1,
+          modelComplexity: 0,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
         });
         s.hands.onResults(onHandResults);
       }
@@ -245,8 +245,8 @@ export default function FingerRacer({ onReturnToMenu }) {
               await s.hands.send({ image: videoRef.current });
             }
           },
-          width: 640,
-          height: 480,
+          width: 480,
+          height: 360,
         });
       }
       await s.camera.start();
@@ -279,7 +279,24 @@ export default function FingerRacer({ onReturnToMenu }) {
     const drawRoad = (dt) => {
       s.roadOffset = (s.roadOffset + s.baseSpeed * dt) % 60;
 
-      ctx.fillStyle = '#1b233a';
+      const showCamera =
+        videoRef.current &&
+        videoRef.current.readyState >= 2 &&
+        videoRef.current.videoWidth > 0;
+
+      if (showCamera) {
+        ctx.save();
+        ctx.translate(W, 0);
+        ctx.scale(-1, 1);
+        ctx.filter = 'blur(6px) brightness(0.4)';
+        ctx.drawImage(videoRef.current, 0, 0, W, H);
+        ctx.restore();
+
+        ctx.fillStyle = 'rgba(11, 16, 32, 0.48)';
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      ctx.fillStyle = showCamera ? 'rgba(27, 35, 58, 0.55)' : '#1b233a';
       ctx.fillRect(0, 0, W, H);
 
       ctx.fillStyle = '#ff4757';
@@ -418,8 +435,8 @@ export default function FingerRacer({ onReturnToMenu }) {
         setHudScore(s.score);
         setHudSpeed(Math.floor(s.baseSpeed / 2.2));
 
-        s.car.x += (s.car.targetX - s.car.x) * 0.2;
-        s.car.y += (s.car.targetY - s.car.y) * 0.2;
+        s.car.x += (s.car.targetX - s.car.x) * 0.35;
+        s.car.y += (s.car.targetY - s.car.y) * 0.35;
 
         s.car.x = Math.max(100, Math.min(W - 100, s.car.x));
         s.car.y = Math.max(40, Math.min(H - 40, s.car.y));
